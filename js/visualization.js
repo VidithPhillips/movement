@@ -10,59 +10,48 @@ class PoseVisualizer {
         canvas.width = 640;
         canvas.height = 480;
 
-        this.connections = [
-            ['nose', 'left_eye'], ['nose', 'right_eye'],
-            ['left_eye', 'left_ear'], ['right_eye', 'right_ear'],
-            ['left_shoulder', 'right_shoulder'],
-            ['left_shoulder', 'left_elbow'], ['right_shoulder', 'right_elbow'],
-            ['left_elbow', 'left_wrist'], ['right_elbow', 'right_wrist'],
-            ['left_shoulder', 'left_hip'], ['right_shoulder', 'right_hip'],
-            ['left_hip', 'right_hip'],
-            ['left_hip', 'left_knee'], ['right_hip', 'right_knee'],
-            ['left_knee', 'left_ankle'], ['right_knee', 'right_ankle']
-        ];
+        // MediaPipe POSE_CONNECTIONS will be used directly from the library
         this.colors = {
             keypoints: '#00ff00',    // Bright green for better visibility
             skeleton: '#ffffff',      // White for skeleton
             text: '#00ff00',         // Green text
             outline: '#000000'       // Black outline for contrast
         };
+        
         this.textSettings = {
             font: 'bold 16px Inter',
             align: 'center',
             baseline: 'middle'
         };
-        // Pre-allocate path points
-        this.pathPoints = new Float32Array(1000);
-        // Use integer values for better performance
+
+        // Pre-compile common values
         this.keyPointRadius = 4;
         this.lineWidth = 4;
         this.outlineWidth = 6;
-        // Pre-compile common values
-        this.TWO_PI = 2 * Math.PI;
-        this.ctx.lineWidth = 2;
-        this.ctx.strokeStyle = this.colors.skeleton;
     }
 
     drawKeypoints(pose) {
         if (!pose || !pose.keypoints) return;
         
         const ctx = this.ctx;
+        const canvasWidth = ctx.canvas.width;
+        const canvasHeight = ctx.canvas.height;
+
         ctx.save();
         ctx.fillStyle = this.colors.keypoints;
         ctx.beginPath();
+        
         pose.keypoints.forEach(keypoint => {
             if (keypoint && keypoint.score > 0.2) {
-                ctx.arc(keypoint.x, keypoint.y, 4, 0, 2 * Math.PI);
+                // Convert normalized coordinates to pixel coordinates
+                const x = keypoint.x * canvasWidth;
+                const y = keypoint.y * canvasHeight;
+                ctx.arc(x, y, this.keyPointRadius, 0, 2 * Math.PI);
             }
         });
+        
         ctx.fill();
         ctx.restore();
-
-        // Draw face orientation if available
-        if (pose.keypoints3D) {
-            this.drawFaceOrientation(pose);
-        }
     }
 
     drawSkeleton(pose) {
@@ -72,16 +61,13 @@ class PoseVisualizer {
         ctx.strokeStyle = this.colors.skeleton;
         ctx.lineWidth = this.lineWidth;
         
-        this.connections.forEach(([start, end]) => {
-            const startPoint = pose.keypoints.find(kp => kp.name === start);
-            const endPoint = pose.keypoints.find(kp => kp.name === end);
-
-            if (startPoint && endPoint && 
-                startPoint.score > 0.3 && 
-                endPoint.score > 0.3) {
+        // MediaPipe POSE_CONNECTIONS will be used directly from the library
+        pose.keypoints.forEach((keypoint, index) => {
+            const nextKeypoint = pose.keypoints[index + 1];
+            if (nextKeypoint && keypoint.score > 0.3 && nextKeypoint.score > 0.3) {
                 ctx.beginPath();
-                ctx.moveTo(startPoint.x, startPoint.y);
-                ctx.lineTo(endPoint.x, endPoint.y);
+                ctx.moveTo(keypoint.x * ctx.canvas.width, keypoint.y * ctx.canvas.height);
+                ctx.lineTo(nextKeypoint.x * ctx.canvas.width, nextKeypoint.y * ctx.canvas.height);
                 ctx.stroke();
             }
         });
@@ -90,59 +76,59 @@ class PoseVisualizer {
     drawAngles(pose, angles) {
         if (!pose || !angles) return;
 
-        this.ctx.font = this.textSettings.font;
-        this.ctx.fillStyle = this.colors.text;
-        this.ctx.textAlign = this.textSettings.align;
-        this.ctx.textBaseline = this.textSettings.baseline;
+        const ctx = this.ctx;
+        const canvasWidth = ctx.canvas.width;
+        const canvasHeight = ctx.canvas.height;
 
-        // Draw right elbow angle
-        const rightElbow = pose.keypoints.find(kp => kp.name === 'right_elbow');
-        if (rightElbow && angles.rightElbow) {
-            this.ctx.fillText(
-                `${Math.round(angles.rightElbow)}°`,
-                rightElbow.x + 10,
-                rightElbow.y
-            );
-        }
+        ctx.save();
+        ctx.font = this.textSettings.font;
+        ctx.fillStyle = this.colors.text;
+        ctx.textAlign = this.textSettings.align;
+        ctx.textBaseline = this.textSettings.baseline;
 
-        // Draw left elbow angle
-        const leftElbow = pose.keypoints.find(kp => kp.name === 'left_elbow');
-        if (leftElbow && angles.leftElbow) {
-            this.ctx.fillText(
-                `${Math.round(angles.leftElbow)}°`,
-                leftElbow.x - 40,
-                leftElbow.y
-            );
-        }
+        // MediaPipe pose landmarks are indexed 0-32
+        // Draw angles at specific landmarks
+        const anglePoints = {
+            rightElbow: 14,  // Right elbow
+            leftElbow: 13,   // Left elbow
+            rightKnee: 26,   // Right knee
+            leftKnee: 25     // Left knee
+        };
 
-        // Draw knee angles
-        const knees = ['right_knee', 'left_knee'];
-        knees.forEach(knee => {
-            const kp = pose.keypoints.find(kp => kp.name === knee);
-            const angle = angles[knee === 'right_knee' ? 'rightKnee' : 'leftKnee'];
-            if (kp && angle) {
-                this.ctx.fillText(
-                    `${Math.round(angle)}°`,
-                    kp.x + (knee === 'right_knee' ? 10 : -40),
-                    kp.y
+        for (const [angleName, landmarkIndex] of Object.entries(anglePoints)) {
+            if (pose.poseLandmarks && pose.poseLandmarks[landmarkIndex] && angles[angleName]) {
+                const x = pose.poseLandmarks[landmarkIndex].x * canvasWidth;
+                const y = pose.poseLandmarks[landmarkIndex].y * canvasHeight;
+                
+                ctx.fillText(
+                    `${Math.round(angles[angleName])}°`,
+                    x + (angleName.includes('right') ? 10 : -40),
+                    y
                 );
             }
-        });
+        }
+
+        ctx.restore();
     }
 
     drawFaceOrientation(pose) {
+        if (!pose || !pose.keypoints3D) return;
+        
+        const ctx = this.ctx;
+        const canvasWidth = ctx.canvas.width;
+        const canvasHeight = ctx.canvas.height;
+
         const nose = pose.keypoints3D.find(kp => kp.name === 'nose');
         const leftEye = pose.keypoints3D.find(kp => kp.name === 'left_eye');
         const rightEye = pose.keypoints3D.find(kp => kp.name === 'right_eye');
 
         if (nose && leftEye && rightEye) {
-            const ctx = this.ctx;
             const scale = 50; // Scale factor for visualization
 
             // Draw direction vector from nose
             ctx.beginPath();
-            ctx.moveTo(nose.x, nose.y);
-            ctx.lineTo(nose.x + nose.z * scale, nose.y);
+            ctx.moveTo(nose.x * canvasWidth, nose.y * canvasHeight);
+            ctx.lineTo(nose.x * canvasWidth + nose.z * scale, nose.y * canvasHeight);
             ctx.strokeStyle = '#ff0000';
             ctx.lineWidth = 2;
             ctx.stroke();

@@ -25,63 +25,97 @@ class MovementAnalyzer {
             ['left_elbow', 'Left Elbow'],
             // ... other mappings
         ]);
+
+        // MediaPipe landmark indices
+        this.landmarks = {
+            nose: 0,
+            leftEye: 2,
+            rightEye: 5,
+            leftShoulder: 11,
+            rightShoulder: 12,
+            leftElbow: 13,
+            rightElbow: 14,
+            leftWrist: 15,
+            rightWrist: 16,
+            leftHip: 23,
+            rightHip: 24,
+            leftKnee: 25,
+            rightKnee: 26,
+            leftAnkle: 27,
+            rightAnkle: 28
+        };
     }
 
     setBaseline(angles) {
         this.baselineAngles = angles;
     }
 
-    updateMetrics(pose, detector) {
-        if (!pose || !pose.keypoints || pose.keypoints.length === 0) {
-            console.warn('Invalid pose data for metrics');
-            return;
-        }
-        
-        const faceMetrics = detector.calculateFaceMetrics(pose);
-        
-        // Add error handling for metrics
-        try {
-            const angles = detector.calculateJointAngles(pose);
-            const postureMetrics = detector.calculatePosture(pose);
-            this.updateBodyAnglesDOM(angles);
-            this.updatePostureDOM(postureMetrics);
-        } catch (error) {
-            console.error('Error calculating metrics:', error);
-        }
+    updateMetrics(pose) {
+        if (!pose || !pose.keypoints) return;
 
-        // Always update head & face metrics in both modes
+        const angles = this.calculateJointAngles(pose);
+        const postureMetrics = this.calculatePosture(pose);
+        const faceMetrics = this.calculateFaceMetrics(pose);
+
+        this.updateBodyAnglesDOM(angles);
+        this.updatePostureDOM(postureMetrics);
         this.updateHeadFaceDOM(faceMetrics);
+    }
 
-        this.mode = mode; // Store mode for other components to use
+    calculateJointAngles(pose) {
+        const angles = {};
+        const landmarks = pose.poseLandmarks;
+        
+        if (!landmarks) return angles;
+
+        // Calculate right arm angle
+        angles.rightElbow = this.calculateAngle(
+            landmarks[this.landmarks.rightShoulder],
+            landmarks[this.landmarks.rightElbow],
+            landmarks[this.landmarks.rightWrist]
+        );
+
+        // Calculate left arm angle
+        angles.leftElbow = this.calculateAngle(
+            landmarks[this.landmarks.leftShoulder],
+            landmarks[this.landmarks.leftElbow],
+            landmarks[this.landmarks.leftWrist]
+        );
+
+        // Add other angle calculations as needed
+        return angles;
+    }
+
+    calculateAngle(p1, p2, p3) {
+        if (!p1 || !p2 || !p3) return null;
+
+        const radians = Math.atan2(
+            p3.y - p2.y,
+            p3.x - p2.x
+        ) - Math.atan2(
+            p1.y - p2.y,
+            p1.x - p2.x
+        );
+
+        let angle = Math.abs(radians * 180.0 / Math.PI);
+        
+        if (angle > 180.0) {
+            angle = 360 - angle;
+        }
+        
+        return angle;
     }
 
     updateBodyAnglesDOM(angles) {
-        this.htmlBuilder.length = 0;
-        
-        for (const [joint, angle] of Object.entries(angles)) {
-            let changeInfo = "";
-            const history = this.angleHistory[joint];
-            if (history && history.length >= 2) {
-                const change = history[history.length - 1] - history[history.length - 2];
-                const changeSymbol = this.getChangeSymbol(change);
-                changeInfo = `<div class="change-indicator ${change > 0 ? 'positive' : change < 0 ? 'negative' : 'neutral'}">
-                    ${changeSymbol} ${Math.abs(change).toFixed(1)}°
-                </div>`;
-            }
-            
-            this.htmlBuilder.push(`<div class="metric-value">
-                <div class="metric-label">${this.formatJointName(joint)}</div>
-                <div class="metric-number">
-                    ${angle ? angle.toFixed(1) : 'N/A'}°
-                    ${changeInfo}
+        this.bodyAnglesDiv.innerHTML = Object.entries(angles)
+            .map(([joint, angle]) => `
+                <div class="metric-value">
+                    <div class="metric-label">${this.formatJointName(joint)}</div>
+                    <div class="metric-number">
+                        ${angle ? angle.toFixed(1) : 'N/A'}°
+                    </div>
                 </div>
-            </div>`);
-        }
-        this.bodyAnglesDiv.innerHTML = this.htmlBuilder.join('');
-    }
-
-    getChangeSymbol(change) {
-        return change > 0 ? '↑' : change < 0 ? '↓' : '→';
+            `).join('');
     }
 
     updateHeadFaceDOM(metrics) {
@@ -119,7 +153,7 @@ class MovementAnalyzer {
 
     formatJointName(name) {
         return name
-            .split('_')
+            .split(/(?=[A-Z])/)
             .map(word => word.charAt(0).toUpperCase() + word.slice(1))
             .join(' ');
     }
@@ -128,5 +162,16 @@ class MovementAnalyzer {
         Object.keys(this.angleHistory).forEach(key => {
             this.angleHistory[key] = [];
         });
+    }
+
+    // Helper method to get normalized coordinates
+    getNormalizedCoord(landmark) {
+        if (!landmark) return null;
+        return {
+            x: landmark.x,
+            y: landmark.y,
+            z: landmark.z || 0,
+            visibility: landmark.visibility || 0
+        };
     }
 } 
