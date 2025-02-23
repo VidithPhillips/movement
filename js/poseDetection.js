@@ -3,26 +3,49 @@ class PoseDetector {
         this.detector = null;
         this.lastPose = null;
         this.isInitialized = false;
+        // Cache commonly used values
+        this.PI_180 = 180 / Math.PI;
+        // Cache commonly used keypoint names
+        this.keypointNames = {
+            face: ['nose', 'left_eye', 'right_eye', 'left_ear', 'right_ear'],
+            body: ['left_shoulder', 'right_shoulder', 'left_elbow', 'right_elbow', 
+                  'left_wrist', 'right_wrist', 'left_hip', 'right_hip', 
+                  'left_knee', 'right_knee', 'left_ankle', 'right_ankle']
+        };
+        // Pre-allocate vectors for 3D calculations
+        this.v1 = { x: 0, y: 0, z: 0 };
+        this.v2 = { x: 0, y: 0, z: 0 };
     }
 
     async initialize() {
         try {
-            const model = poseDetection.SupportedModels.MOVENET;
+            console.log('Starting detector initialization...');
+            const model = poseDetection.SupportedModels.BLAZEPOSE;
             const detectorConfig = {
-                modelType: poseDetection.movenet.modelType.SINGLEPOSE_LIGHTNING,
                 enableSmoothing: true,
-                minPoseScore: 0.2,
-                multiPoseMaxDimension: 256,
+                runtime: 'mediapipe',
+                solutionPath: 'https://cdn.jsdelivr.net/npm/@mediapipe/pose',
+                modelType: 'lite',  // 'lite', 'full', or 'heavy'
                 enableTracking: true,
-                trackerType: 'keypoint'
+                smoothLandmarks: true,
+                minPoseScore: 0.5
             };
-            console.log('Initializing pose detector...');
+            
+            // Check if TensorFlow.js is properly loaded
+            if (!window.tf) {
+                throw new Error('TensorFlow.js not loaded');
+            }
+
             this.detector = await poseDetection.createDetector(model, detectorConfig);
-            console.log('Pose detector initialized successfully');
+            if (!this.detector) {
+                throw new Error('Failed to create detector');
+            }
+
             this.isInitialized = true;
+            console.log('Detector initialized successfully');
             return true;
         } catch (error) {
-            console.error('Error initializing pose detector:', error.message);
+            console.error('Detector initialization error:', error);
             alert('Failed to initialize pose detector. Please check console for details.');
             return false;
         }
@@ -35,20 +58,15 @@ class PoseDetector {
             const poses = await this.detector.estimatePoses(video, {
                 flipHorizontal: true,
                 maxPoses: 1,
-                scoreThreshold: 0.3
+                scoreThreshold: 0.5,
+                staticImageMode: false,
+                smoothSegmentation: false  // Disable if not needed
             });
 
             if (poses.length > 0) {
                 const pose = poses[0];
-                // Use the top-level score if available; otherwise calculate the average score from keypoints.
-                const poseScore = (pose.score !== undefined)
-                    ? pose.score
-                    : (pose.keypoints.reduce((sum, kp) => sum + kp.score, 0) / pose.keypoints.length);
-
-                if (poseScore > 0.2) {
-                    this.lastPose = pose;
-                    return pose;
-                }
+                this.lastPose = pose;
+                return pose;
             }
             return null;
         } catch (error) {
@@ -59,23 +77,41 @@ class PoseDetector {
 
     getKeypoint(pose, name) {
         if (!pose || !pose.keypoints) return null;
+        // MediaPipe uses keypoints3D for better accuracy
+        if (pose.keypoints3D) {
+            const kp = pose.keypoints3D.find(kp => kp.name === name);
+            if (kp) return kp;
+        }
+        // Fallback to 2D keypoints
         return pose.keypoints.find(kp => kp.name === name);
     }
 
     calculateAngle(p1, p2, p3) {
         if (!p1 || !p2 || !p3) return null;
         
-        const radians = Math.atan2(
+        if (p1.z !== undefined && p2.z !== undefined && p3.z !== undefined) {
+            // Reuse pre-allocated vectors
+            this.v1.x = p1.x - p2.x;
+            this.v1.y = p1.y - p2.y;
+            this.v1.z = p1.z - p2.z;
+            this.v2.x = p3.x - p2.x;
+            this.v2.y = p3.y - p2.y;
+            this.v2.z = p3.z - p2.z;
+            
+            const dot = this.v1.x * this.v2.x + this.v1.y * this.v2.y + this.v1.z * this.v2.z;
+            const v1mag = Math.hypot(this.v1.x, this.v1.y, this.v1.z);
+            const v2mag = Math.hypot(this.v2.x, this.v2.y, this.v2.z);
+            
+            return Math.acos(dot / (v1mag * v2mag)) * this.PI_180;
+        }
+        
+        return Math.abs(Math.atan2(
             p3.y - p2.y,
             p3.x - p2.x
         ) - Math.atan2(
             p1.y - p2.y,
             p1.x - p2.x
-        );
-        
-        let angle = Math.abs(radians * 180.0 / Math.PI);
-        if (angle > 180.0) angle = 360 - angle;
-        return angle;
+        )) * this.PI_180;
     }
 
     calculateJointAngles(pose) {
@@ -120,64 +156,76 @@ class PoseDetector {
         return angles;
     }
 
-    calculateMovementSpeed(pose) {
-        if (!this.lastPose || !pose) return null;
-
-        const speeds = {};
-        const keypoints = ['right_wrist', 'left_wrist', 'right_ankle', 'left_ankle'];
-
-        keypoints.forEach(kp => {
-            const current = this.getKeypoint(pose, kp);
-            const last = this.getKeypoint(this.lastPose, kp);
-            
-            if (current && last) {
-                const dx = current.x - last.x;
-                const dy = current.y - last.y;
-                speeds[kp] = Math.sqrt(dx * dx + dy * dy);
-            }
-        });
-
-        return speeds;
-    }
-
     calculateFaceMetrics(pose) {
         const metrics = {};
         
-        // Face keypoints
-        const nose = this.getKeypoint(pose, 'nose');
-        const leftEye = this.getKeypoint(pose, 'left_eye');
-        const rightEye = this.getKeypoint(pose, 'right_eye');
-        const leftEar = this.getKeypoint(pose, 'left_ear');
-        const rightEar = this.getKeypoint(pose, 'right_ear');
+        // MediaPipe face landmarks
+        const landmarks = [
+            'nose',
+            'left_eye_inner', 'left_eye', 'left_eye_outer',
+            'right_eye_inner', 'right_eye', 'right_eye_outer',
+            'left_ear', 'right_ear',
+            'mouth_left', 'mouth_right'
+        ];
+        
+        const points = {};
+        landmarks.forEach(name => {
+            points[name] = this.getKeypoint(pose, name);
+        });
 
-        if (leftEye && rightEye) {
-            // Eye measurements
-            const eyeDx = rightEye.x - leftEye.x;
-            const eyeDy = rightEye.y - leftEye.y;
-            metrics.eyeDistance = Math.sqrt(eyeDx * eyeDx + eyeDy * eyeDy);
-            metrics.eyeTilt = Math.atan2(eyeDy, eyeDx) * 180 / Math.PI;
+        if (points.left_eye && points.right_eye) {
+            // Enhanced eye measurements using inner and outer points
+            const leftEyeWidth = this.getDistance(points.left_eye_inner, points.left_eye_outer);
+            const rightEyeWidth = this.getDistance(points.right_eye_inner, points.right_eye_outer);
+            metrics.eyeDistance = this.getDistance(points.left_eye, points.right_eye);
+            metrics.eyeSymmetry = Math.abs(leftEyeWidth - rightEyeWidth);
+            metrics.eyeTilt = this.calculateAngle(points.left_eye, points.right_eye, {
+                x: points.right_eye.x,
+                y: points.left_eye.y,
+                z: points.left_eye.z
+            });
         }
 
-        if (leftEar && rightEar && metrics.eyeDistance) {
-            // Head rotation (using ear-to-ear vs eye-to-eye ratio)
-            const earDist = Math.sqrt(
-                Math.pow(rightEar.x - leftEar.x, 2) + 
-                Math.pow(rightEar.y - leftEar.y, 2)
+        // Enhanced head pose estimation using 3D points
+        if (points.nose && points.left_eye && points.right_eye) {
+            const faceNormal = this.calculateFaceNormal(
+                points.left_eye,
+                points.right_eye,
+                points.nose
             );
-            metrics.headRotation = earDist / metrics.eyeDistance;
-        }
-
-        if (nose && leftEye && rightEye) {
-            // Head position relative to eyes
-            const eyeMidX = (leftEye.x + rightEye.x) / 2;
-            const eyeMidY = (leftEye.y + rightEye.y) / 2;
-            metrics.headTilt = Math.atan2(nose.y - eyeMidY, nose.x - eyeMidX) * 180 / Math.PI;
-            
-            // Head forward/backward tilt
-            metrics.headForwardTilt = nose.y - eyeMidY;
+            metrics.headYaw = Math.atan2(faceNormal.x, faceNormal.z) * 180 / Math.PI;
+            metrics.headPitch = Math.atan2(faceNormal.y, faceNormal.z) * 180 / Math.PI;
+            metrics.headRoll = metrics.eyeTilt;
         }
 
         return metrics;
+    }
+
+    getDistance(p1, p2) {
+        if (!p1 || !p2) return null;
+        return Math.sqrt(
+            Math.pow(p2.x - p1.x, 2) +
+            Math.pow(p2.y - p1.y, 2)
+        );
+    }
+
+    calculateFaceNormal(p1, p2, p3) {
+        // Calculate face plane normal vector
+        const v1 = {
+            x: p2.x - p1.x,
+            y: p2.y - p1.y,
+            z: p2.z - p1.z
+        };
+        const v2 = {
+            x: p3.x - p1.x,
+            y: p3.y - p1.y,
+            z: p3.z - p1.z
+        };
+        return {
+            x: v1.y * v2.z - v1.z * v2.y,
+            y: v1.z * v2.x - v1.x * v2.z,
+            z: v1.x * v2.y - v1.y * v2.x
+        };
     }
 
     calculatePosture(pose) {

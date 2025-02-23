@@ -4,6 +4,9 @@ class MovementAnalysisApp {
         this.lastDrawTime = 0;
         this.frameCount = 0;
         this.fps = 0;
+        this.rafId = null;  // Store requestAnimationFrame ID
+        this.lastFrameTime = 0;
+        this.frameInterval = 1000 / 24;  // Target 24 FPS
         
         this.video = document.getElementById('video');
         this.canvas = document.getElementById('output');
@@ -24,12 +27,13 @@ class MovementAnalysisApp {
 
     async initialize() {
         try {
+            console.log('Starting camera initialization...');
             // Setup camera
             const stream = await navigator.mediaDevices.getUserMedia({
                 video: { 
                     width: { ideal: 640 },
                     height: { ideal: 480 },
-                    frameRate: { ideal: 30 }
+                    frameRate: { ideal: 24 }  // Lower framerate for better performance
                 },
                 audio: false
             });
@@ -38,6 +42,7 @@ class MovementAnalysisApp {
             return new Promise(resolve => {
                 this.video.onloadedmetadata = () => {
                     this.video.play();
+                    console.log('Camera initialized successfully');
                     this.canvas.width = this.video.width;
                     this.canvas.height = this.video.height;
                     // Enable hardware acceleration
@@ -47,9 +52,18 @@ class MovementAnalysisApp {
                     });
                     resolve(true);
                 };
+                
+                // Add timeout for camera initialization
+                setTimeout(() => {
+                    if (!this.video.videoWidth) {
+                        console.error('Camera initialization timeout');
+                        resolve(false);
+                    }
+                }, 10000);
             });
         } catch (error) {
-            console.error('Error initializing camera:', error);
+            console.error('Camera initialization error:', error);
+            alert('Failed to access camera. Please ensure camera permissions are granted.');
             return false;
         }
     }

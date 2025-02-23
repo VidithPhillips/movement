@@ -71,11 +71,10 @@ class MovementAnalyzer {
     updateHeadFaceDOM(metrics) {
         const headFaceDiv = document.getElementById('headFaceMetrics');
         const formattedMetrics = {
-            'Eye Distance': metrics.eyeDistance ? `${metrics.eyeDistance.toFixed(1)}px` : 'N/A',
-            'Eye Tilt': metrics.eyeTilt ? `${metrics.eyeTilt.toFixed(1)}°` : 'N/A',
-            'Head Rotation': metrics.headRotation ? `${(metrics.headRotation * 100).toFixed(1)}%` : 'N/A',
-            'Head Tilt': metrics.headTilt ? `${metrics.headTilt.toFixed(1)}°` : 'N/A',
-            'Forward Tilt': metrics.headForwardTilt ? `${metrics.headForwardTilt.toFixed(1)}px` : 'N/A'
+            'Head Yaw': metrics.headYaw ? `${metrics.headYaw.toFixed(1)}°` : 'N/A',
+            'Head Pitch': metrics.headPitch ? `${metrics.headPitch.toFixed(1)}°` : 'N/A',
+            'Head Roll': metrics.headRoll ? `${metrics.headRoll.toFixed(1)}°` : 'N/A',
+            'Eye Symmetry': metrics.eyeSymmetry ? `${metrics.eyeSymmetry.toFixed(1)}` : 'N/A'
         };
 
         headFaceDiv.innerHTML = Object.entries(formattedMetrics)

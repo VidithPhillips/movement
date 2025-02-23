@@ -1,7 +1,10 @@
 class PoseVisualizer {
     constructor(canvas) {
-        this.ctx = canvas.getContext('2d');
-        this.ctx.imageSmoothingEnabled = true;
+        this.ctx = canvas.getContext('2d', {
+            alpha: false,
+            desynchronized: true,
+            willReadFrequently: false
+        });
         this.connections = [
             ['nose', 'left_eye'], ['nose', 'right_eye'],
             ['left_eye', 'left_ear'], ['right_eye', 'right_ear'],
@@ -19,22 +22,37 @@ class PoseVisualizer {
             text: '#00ff00',         // Green text
             outline: '#000000'       // Black outline for contrast
         };
+        this.textSettings = {
+            font: 'bold 16px Inter',
+            align: 'center',
+            baseline: 'middle'
+        };
+        // Pre-allocate path points
+        this.pathPoints = new Float32Array(1000);
+        // Use integer values for better performance
+        this.keyPointRadius = 4;
+        this.lineWidth = 4;
+        this.outlineWidth = 6;
     }
 
     drawKeypoints(pose) {
-        if (!pose || !pose.keypoints) return;
-
-        this.ctx.fillStyle = this.colors.keypoints;
-        this.ctx.strokeStyle = this.colors.outline;
-        this.ctx.lineWidth = 3;
+        if (!pose.keypoints) return;
+        
+        const ctx = this.ctx;
+        ctx.fillStyle = this.colors.keypoints;
+        // Batch all keypoint drawing
+        ctx.beginPath();
         pose.keypoints.forEach(keypoint => {
             if (keypoint.score > 0.3) {
-                this.ctx.beginPath();
-                this.ctx.arc(keypoint.x, keypoint.y, 8, 0, 2 * Math.PI);
-                this.ctx.fill();
-                this.ctx.stroke();
+                ctx.arc(keypoint.x, keypoint.y, 4, 0, 2 * Math.PI);
             }
         });
+        ctx.fill();
+
+        // Draw face orientation if available
+        if (pose.keypoints3D) {
+            this.drawFaceOrientation(pose);
+        }
     }
 
     drawSkeleton(pose) {
@@ -72,10 +90,10 @@ class PoseVisualizer {
     drawAngles(pose, angles) {
         if (!pose || !angles) return;
 
-        this.ctx.font = 'bold 16px Inter';
+        this.ctx.font = this.textSettings.font;
         this.ctx.fillStyle = this.colors.text;
-        this.ctx.textAlign = 'center';
-        this.ctx.textBaseline = 'middle';
+        this.ctx.textAlign = this.textSettings.align;
+        this.ctx.textBaseline = this.textSettings.baseline;
 
         // Draw right elbow angle
         const rightElbow = pose.keypoints.find(kp => kp.name === 'right_elbow');
@@ -110,6 +128,25 @@ class PoseVisualizer {
                 );
             }
         });
+    }
+
+    drawFaceOrientation(pose) {
+        const nose = pose.keypoints3D.find(kp => kp.name === 'nose');
+        const leftEye = pose.keypoints3D.find(kp => kp.name === 'left_eye');
+        const rightEye = pose.keypoints3D.find(kp => kp.name === 'right_eye');
+
+        if (nose && leftEye && rightEye) {
+            const ctx = this.ctx;
+            const scale = 50; // Scale factor for visualization
+
+            // Draw direction vector from nose
+            ctx.beginPath();
+            ctx.moveTo(nose.x, nose.y);
+            ctx.lineTo(nose.x + nose.z * scale, nose.y);
+            ctx.strokeStyle = '#ff0000';
+            ctx.lineWidth = 2;
+            ctx.stroke();
+        }
     }
 
     clear() {

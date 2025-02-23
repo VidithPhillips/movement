@@ -215,4 +215,18 @@ video {
     font-size: 0.8em;
     color: #9e9e9e;
     margin-left: 4px;
+}
+
+.loading-text {
+    margin-top: 10px;
+    font-size: 1.1em;
+}
+
+.loading-error {
+    color: #ff4444;
+    text-align: center;
+    padding: 20px;
+    font-size: 1.1em;
+    background: rgba(255,0,0,0.1);
+    border-radius: 5px;
 } 
