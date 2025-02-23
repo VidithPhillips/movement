@@ -42,7 +42,7 @@ class MediaPipePose {
       drawLandmarks(this.ctx, results.poseLandmarks, 
         {color: '#FF0000', lineWidth: 1});
       
-      // Update 3D visualization and metrics
+      // Emit pose data for analysis
       window.dispatchEvent(new CustomEvent('pose-updated', {
         detail: results.poseLandmarks
       }));
