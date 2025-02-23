@@ -32,25 +32,21 @@ class MovementAnalyzer {
     }
 
     updateMetrics(pose, detector) {
-        if (!pose || !pose.body) return;
-        
-        const faceMetrics = detector.calculateFaceMetrics(pose.body);
-        
-        // Determine tracking mode based on eye distance (face size)
-        // If eyeDistance is greater than a threshold, assume a close-up (head tracking)
-        // Otherwise, assume full body tracking.
-        let mode = 'full';
-        const threshold = 70; // Adjust this value (in pixels) to fit your environment
-        if (faceMetrics && faceMetrics.eyeDistance && faceMetrics.eyeDistance > threshold) {
-            mode = 'head';
+        if (!pose || !pose.keypoints || pose.keypoints.length === 0) {
+            console.warn('Invalid pose data for metrics');
+            return;
         }
-        console.log('Tracking mode:', mode, 'eyeDistance:', faceMetrics ? faceMetrics.eyeDistance : 'N/A');
-
-        if (mode === 'full') {
+        
+        const faceMetrics = detector.calculateFaceMetrics(pose);
+        
+        // Add error handling for metrics
+        try {
             const angles = detector.calculateJointAngles(pose);
             const postureMetrics = detector.calculatePosture(pose);
             this.updateBodyAnglesDOM(angles);
             this.updatePostureDOM(postureMetrics);
+        } catch (error) {
+            console.error('Error calculating metrics:', error);
         }
 
         // Always update head & face metrics in both modes

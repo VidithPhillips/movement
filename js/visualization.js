@@ -48,14 +48,16 @@ class PoseVisualizer {
         if (!pose || !pose.keypoints) return;
         
         const ctx = this.ctx;
+        ctx.save();
         ctx.fillStyle = this.colors.keypoints;
         ctx.beginPath();
         pose.keypoints.forEach(keypoint => {
-            if (keypoint.score > 0.3) {
+            if (keypoint && keypoint.score > 0.2) {
                 ctx.arc(keypoint.x, keypoint.y, 4, 0, 2 * Math.PI);
             }
         });
         ctx.fill();
+        ctx.restore();
 
         // Draw face orientation if available
         if (pose.keypoints3D) {

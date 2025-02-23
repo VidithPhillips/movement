@@ -30,27 +30,37 @@ class PoseDetector {
         try {
             console.log('Starting detector initialization...');
             
-            if (!window.Human) {
-                throw new Error('TensorFlow.js not loaded');
-            }
-            
+            // Initialize TensorFlow.js with WebGL backend
             await tf.setBackend('webgl');
             await tf.ready();
-            console.log('TensorFlow backend ready:', tf.getBackend());
+            console.log('GPU Backend initialized:', tf.getBackend());
             
-            // Initialize Human library with YOLOv8
-            this.detector = new Human.Human({
-                modelPath: 'https://cdn.jsdelivr.net/npm/@vladmandic/human/models',
-                filter: { enabled: true },
-                body: {
-                    enabled: true,
-                    modelPath: 'yolov8-pose.json',
-                    maxDetections: 1,
-                    minConfidence: 0.3
+            if (!window.yolo) {
+                throw new Error('YOLO not loaded');
+            }
+            
+            // Initialize YOLO11 pose model
+            this.detector = await yolo.load({
+                task: 'pose',
+                modelName: 'yolo11n-pose',  // Use nano model for real-time
+                modelPath: 'https://github.com/ultralytics/assets/releases/download/v8.3.0/yolo11n-pose.pt',
+                confidence: 0.3,
+                iou: 0.45,
+                device: 'gpu',  // Use GPU
+                modelSize: 'n',  // nano size for better performance
+                webgl: {
+                    powerPreference: 'high-performance',
+                    precision: 'highp'
                 }
             });
-            await this.detector.load();
-            
+
+            // Warm up the model
+            console.log('Warming up model...');
+            const warmupTensor = tf.zeros([1, 640, 480, 3]);
+            await this.detector.predict(warmupTensor);
+            warmupTensor.dispose();
+            console.log('Model warmed up');
+
             console.log('Detector initialized');
             this.isInitialized = true;
             return true;
@@ -70,20 +80,40 @@ class PoseDetector {
                 return null;
             }
 
-            // Use Human library's detect method
-            const result = await this.detector.detect(video);
+            // Convert video to tensor efficiently
+            const videoTensor = tf.tidy(() => {
+                const tensor = tf.browser.fromPixels(video);
+                // Normalize and reshape for the model
+                return tf.div(tensor, 255.0)
+                    .expandDims(0)
+                    .transpose([0, 3, 1, 2]);  // NCHW format for GPU
+            });
+
+            // Run YOLO11 pose detection
+            const results = await this.detector.predict(
+                videoTensor,
+                {
+                    size: 640,
+                    flip: true,
+                    batchSize: 1,
+                    maxOverlap: 0.45,
+                    gpuAcceleration: true
+                }
+            );
             
-            // Convert Human format to our format
-            if (result.body && result.body.length > 0) {
-                const humanPose = result.body[0];
+            // Clean up tensor
+            videoTensor.dispose();
+
+            if (results && results.length > 0) {
+                const pose = results[0];
                 return {
-                    keypoints: humanPose.keypoints.map(kp => ({
+                    keypoints: pose.keypoints.map(kp => ({
                         x: kp.x,
                         y: kp.y,
-                        score: kp.score,
-                        name: kp.part
+                        score: kp.confidence,
+                        name: kp.class
                     })),
-                    score: humanPose.score
+                    score: pose.confidence
                 };
             }
             

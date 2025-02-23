@@ -86,28 +86,34 @@ class MovementAnalysisApp {
     }
 
     async detectAndDraw() {
-        console.log('8. In detectAndDraw');
-        this.visualizer.clear();
+        if (!this.video.readyState === this.video.HAVE_ENOUGH_DATA) {
+            requestAnimationFrame(() => this.detectAndDraw());
+            return;
+        }
         
         try {
             let pose = await this.detector.detectPose(this.video);
-            console.log('9. Pose detection result:', pose ? 'Success' : 'No pose');
             
             if (pose) {
-                console.log('10. Drawing pose');
                 this.visualizer.drawSkeleton(pose);
                 this.visualizer.drawKeypoints(pose);
                 const angles = this.detector.calculateJointAngles(pose);
                 this.visualizer.drawAngles(pose, angles);
                 this.analyzer.updateMetrics(pose, this.detector);
             }
+            this.visualizer.clear();
         } catch (error) {
             console.error('Detection error:', error);
         }
         
-        // Ensure loop continues even if there's an error
         if (this.isRunning) {
-            requestAnimationFrame(() => this.detectAndDraw());
+            const now = performance.now();
+            if (now - this.lastFrameTime >= this.targetFrameInterval) {
+                requestAnimationFrame(() => this.detectAndDraw());
+                this.lastFrameTime = now;
+            } else {
+                setTimeout(() => this.detectAndDraw(), 1);
+            }
         }
     }
 }
