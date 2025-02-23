@@ -4,6 +4,7 @@ class MovementAnalysisApp {
         this.canvas = document.getElementById('output');
         this.startBtn = document.getElementById('startBtn');
         this.resetBtn = document.getElementById('resetBtn');
+        this.baselineBtn = document.getElementById('baselineBtn');
         
         this.detector = new PoseDetector();
         this.visualizer = new PoseVisualizer(this.canvas);
@@ -39,6 +40,18 @@ class MovementAnalysisApp {
     setupEventListeners() {
         this.startBtn.addEventListener('click', () => this.toggleAnalysis());
         this.resetBtn.addEventListener('click', () => this.reset());
+        this.baselineBtn.addEventListener('click', () => this.captureBaseline());
+    }
+
+    captureBaseline() {
+        if (!this.detector.lastPose) {
+            alert("No pose detected yet. Please ensure you are in frame before capturing the baseline.");
+            return;
+        }
+        // Calculate current joint angles and set as baseline
+        const angles = this.detector.calculateJointAngles(this.detector.lastPose);
+        this.analyzer.setBaseline(angles);
+        alert("Baseline captured!");
     }
 
     async toggleAnalysis() {
@@ -60,6 +73,9 @@ class MovementAnalysisApp {
     reset() {
         this.analyzer.reset();
         this.visualizer.clear();
+        if (this.analyzer.baselineAngles) {
+            this.analyzer.baselineAngles = null;
+        }
     }
 
     async detectAndDraw() {

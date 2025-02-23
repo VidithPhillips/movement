@@ -31,9 +31,19 @@ class PoseDetector {
                 maxPoses: 1
             });
 
-            if (poses.length > 0 && poses[0].score > 0.3) {
-                this.lastPose = poses[0];
-                return poses[0];
+            if (poses.length > 0) {
+                const pose = poses[0];
+                // Use the top-level score if available; otherwise calculate the average score from keypoints.
+                const poseScore = (pose.score !== undefined)
+                    ? pose.score
+                    : (pose.keypoints.reduce((sum, kp) => sum + kp.score, 0) / pose.keypoints.length);
+
+                console.log('Detected pose score:', poseScore);
+
+                if (poseScore > 0.3) {
+                    this.lastPose = pose;
+                    return pose;
+                }
             }
             return null;
         } catch (error) {

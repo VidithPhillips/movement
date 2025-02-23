@@ -7,6 +7,7 @@ class MovementAnalyzer {
             rightKnee: [],
             leftKnee: []
         };
+        this.baselineAngles = null;
         this.maxHistoryLength = 30;
         this.initializeChart();
     }
@@ -57,6 +58,10 @@ class MovementAnalyzer {
         });
     }
 
+    setBaseline(angles) {
+        this.baselineAngles = angles;
+    }
+
     updateMetrics(pose, detector) {
         if (!pose) return;
 
@@ -86,15 +91,19 @@ class MovementAnalyzer {
     }
 
     updateDOM(angles, speeds) {
-        // Update joint angles display
+        // Update joint angles display with baseline comparison if available
         const jointAnglesDiv = document.getElementById('jointAngles');
         jointAnglesDiv.innerHTML = Object.entries(angles)
-            .map(([joint, angle]) => `
-                <div class="metric-value">
-                    <div class="metric-label">${this.formatJointName(joint)}</div>
-                    <div class="metric-number">${angle ? angle.toFixed(1) : 'N/A'}°</div>
-                </div>
-            `).join('');
+            .map(([joint, angle]) => {
+                let baselineInfo = "";
+                if (this.baselineAngles && this.baselineAngles[joint] != null) {
+                    baselineInfo = `<br>Baseline: ${this.baselineAngles[joint].toFixed(1)}°, Diff: ${(angle - this.baselineAngles[joint]).toFixed(1)}°`;
+                }
+                return `<div class="metric-value">
+                            <div class="metric-label">${this.formatJointName(joint)}</div>
+                            <div class="metric-number">Current: ${angle ? angle.toFixed(1) : 'N/A'}° ${baselineInfo}</div>
+                        </div>`;
+            }).join('');
 
         // Update movement speeds display
         const movementMetricsDiv = document.getElementById('movementMetrics');
