@@ -20,22 +20,28 @@ class PoseDetector {
     async initialize() {
         try {
             console.log('Starting detector initialization...');
+            // Wait for MediaPipe to be ready
+            if (typeof window.pose === 'undefined') {
+                console.log('Waiting for MediaPipe to load...');
+                await new Promise(resolve => setTimeout(resolve, 1000));
+            }
+
             const model = poseDetection.SupportedModels.BLAZEPOSE;
             const detectorConfig = {
                 enableSmoothing: true,
                 runtime: 'mediapipe',
-                solutionPath: 'https://cdn.jsdelivr.net/npm/@mediapipe/pose',
-                modelType: 'lite',  // 'lite', 'full', or 'heavy'
+                modelType: 'full',  // Try full model instead of lite
                 enableTracking: true,
                 smoothLandmarks: true,
-                minPoseScore: 0.5
+                minPoseScore: 0.3
             };
             
-            // Check if TensorFlow.js is properly loaded
-            if (!window.tf) {
-                throw new Error('TensorFlow.js not loaded');
+            // Check if required dependencies are loaded
+            if (!window.tf || !window.poseDetection) {
+                throw new Error('Required libraries not loaded');
             }
 
+            console.log('Creating detector with config:', detectorConfig);
             this.detector = await poseDetection.createDetector(model, detectorConfig);
             if (!this.detector) {
                 throw new Error('Failed to create detector');
@@ -45,7 +51,8 @@ class PoseDetector {
             console.log('Detector initialized successfully');
             return true;
         } catch (error) {
-            console.error('Detector initialization error:', error);
+            console.error('Detector initialization error:', error.message);
+            console.error('Full error:', error);
             alert('Failed to initialize pose detector. Please check console for details.');
             return false;
         }
@@ -58,19 +65,24 @@ class PoseDetector {
             const poses = await this.detector.estimatePoses(video, {
                 flipHorizontal: true,
                 maxPoses: 1,
-                scoreThreshold: 0.5,
+                scoreThreshold: 0.3,
                 staticImageMode: false,
-                smoothSegmentation: false  // Disable if not needed
+                smoothSegmentation: false
             });
 
             if (poses.length > 0) {
                 const pose = poses[0];
+                // Add basic validation
+                if (!pose.keypoints || pose.keypoints.length === 0) {
+                    console.warn('Invalid pose detected');
+                    return null;
+                }
                 this.lastPose = pose;
                 return pose;
             }
             return null;
         } catch (error) {
-            console.error('Error detecting pose:', error);
+            console.error('Error detecting pose:', error.message);
             return null;
         }
     }
