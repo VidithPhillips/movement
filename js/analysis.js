@@ -1,6 +1,13 @@
 class MovementAnalyzer {
     constructor() {
         this.angleChart = null;
+        this.angleHistory = {
+            rightElbow: [],
+            leftElbow: [],
+            rightKnee: [],
+            leftKnee: []
+        };
+        this.maxHistoryLength = 30;
         this.initializeChart();
     }
 
@@ -9,24 +16,42 @@ class MovementAnalyzer {
         this.angleChart = new Chart(ctx, {
             type: 'line',
             data: {
-                labels: [],
-                datasets: [{
-                    label: 'Right Elbow Angle',
-                    data: [],
-                    borderColor: 'rgb(75, 192, 192)',
-                    tension: 0.1
-                }]
+                labels: Array(this.maxHistoryLength).fill(''),
+                datasets: [
+                    {
+                        label: 'Right Elbow',
+                        data: [],
+                        borderColor: 'rgb(75, 192, 192)',
+                        tension: 0.4
+                    },
+                    {
+                        label: 'Left Elbow',
+                        data: [],
+                        borderColor: 'rgb(255, 99, 132)',
+                        tension: 0.4
+                    }
+                ]
             },
             options: {
                 responsive: true,
+                maintainAspectRatio: false,
                 scales: {
                     y: {
                         beginAtZero: true,
-                        max: 180
+                        max: 180,
+                        title: {
+                            display: true,
+                            text: 'Angle (degrees)'
+                        }
                     }
                 },
                 animation: {
                     duration: 0
+                },
+                plugins: {
+                    legend: {
+                        position: 'top'
+                    }
                 }
             }
         });
@@ -35,29 +60,67 @@ class MovementAnalyzer {
     updateMetrics(pose, detector) {
         if (!pose) return;
 
-        // Calculate right elbow angle
-        const shoulder = detector.getKeypoint(pose, 'right_shoulder');
-        const elbow = detector.getKeypoint(pose, 'right_elbow');
-        const wrist = detector.getKeypoint(pose, 'right_wrist');
+        // Calculate joint angles
+        const angles = detector.calculateJointAngles(pose);
         
-        const angle = detector.calculateAngle(shoulder, elbow, wrist);
-        
-        // Update chart
-        if (angle) {
-            this.angleChart.data.labels.push('');
-            this.angleChart.data.datasets[0].data.push(angle);
-            
-            // Keep last 30 frames
-            if (this.angleChart.data.labels.length > 30) {
-                this.angleChart.data.labels.shift();
-                this.angleChart.data.datasets[0].data.shift();
+        // Update angle history
+        Object.keys(angles).forEach(joint => {
+            if (angles[joint]) {
+                this.angleHistory[joint].push(angles[joint]);
+                if (this.angleHistory[joint].length > this.maxHistoryLength) {
+                    this.angleHistory[joint].shift();
+                }
             }
-            
-            this.angleChart.update();
-        }
+        });
 
-        // Update metrics display
-        document.getElementById('jointAngles').textContent = 
-            `Right Elbow: ${angle ? angle.toFixed(1) : 'N/A'}°`;
+        // Update chart
+        this.angleChart.data.datasets[0].data = [...this.angleHistory.rightElbow];
+        this.angleChart.data.datasets[1].data = [...this.angleHistory.leftElbow];
+        this.angleChart.update();
+
+        // Calculate movement speeds
+        const speeds = detector.calculateMovementSpeed(pose);
+
+        // Update DOM with metrics
+        this.updateDOM(angles, speeds);
+    }
+
+    updateDOM(angles, speeds) {
+        // Update joint angles display
+        const jointAnglesDiv = document.getElementById('jointAngles');
+        jointAnglesDiv.innerHTML = Object.entries(angles)
+            .map(([joint, angle]) => `
+                <div class="metric-value">
+                    <div class="metric-label">${this.formatJointName(joint)}</div>
+                    <div class="metric-number">${angle ? angle.toFixed(1) : 'N/A'}°</div>
+                </div>
+            `).join('');
+
+        // Update movement speeds display
+        const movementMetricsDiv = document.getElementById('movementMetrics');
+        movementMetricsDiv.innerHTML = Object.entries(speeds || {})
+            .map(([joint, speed]) => `
+                <div class="metric-value">
+                    <div class="metric-label">${this.formatJointName(joint)} Speed</div>
+                    <div class="metric-number">${speed ? speed.toFixed(1) : 'N/A'}</div>
+                </div>
+            `).join('');
+    }
+
+    formatJointName(name) {
+        return name
+            .split('_')
+            .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+            .join(' ');
+    }
+
+    reset() {
+        Object.keys(this.angleHistory).forEach(key => {
+            this.angleHistory[key] = [];
+        });
+        this.angleChart.data.datasets.forEach(dataset => {
+            dataset.data = [];
+        });
+        this.angleChart.update();
     }
 } 

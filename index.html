@@ -5,30 +5,32 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Movement Analysis System</title>
     <link rel="stylesheet" href="styles.css">
-    <!-- TensorFlow.js -->
-    <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@3.11.0"></script>
-    <!-- TF.js models -->
-    <script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/pose-detection"></script>
-    <!-- Chart.js for visualization -->
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- Latest TensorFlow.js -->
+    <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@4.15.0"></script>
+    <!-- Latest TF.js models -->
+    <script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/pose-detection@2.1.3"></script>
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 </head>
 <body>
     <div class="container">
         <div class="video-container">
             <video id="video" playsinline></video>
             <canvas id="output"></canvas>
+            <div class="controls">
+                <button id="startBtn">Start Analysis</button>
+                <button id="resetBtn">Reset</button>
+            </div>
         </div>
         <div class="metrics-container">
-            <canvas id="angleChart"></canvas>
-            <div id="metrics">
-                <div class="metric-box">
-                    <h3>Joint Angles</h3>
-                    <div id="jointAngles"></div>
-                </div>
-                <div class="metric-box">
-                    <h3>Movement Speed</h3>
-                    <div id="movementSpeed"></div>
-                </div>
+            <div class="metric-box">
+                <h3>Joint Angles</h3>
+                <canvas id="angleChart"></canvas>
+                <div id="jointAngles"></div>
+            </div>
+            <div class="metric-box">
+                <h3>Movement Analysis</h3>
+                <div id="movementMetrics"></div>
             </div>
         </div>
     </div>

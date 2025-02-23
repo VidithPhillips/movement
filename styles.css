@@ -10,12 +10,16 @@ body {
     gap: 20px;
     max-width: 1400px;
     margin: 0 auto;
+    height: calc(100vh - 40px);
 }
 
 .video-container {
     position: relative;
     width: 640px;
     height: 480px;
+    background: #000;
+    border-radius: 10px;
+    overflow: hidden;
 }
 
 video {
@@ -31,12 +35,48 @@ video {
     height: 100%;
 }
 
+.controls {
+    position: absolute;
+    bottom: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    gap: 10px;
+    z-index: 10;
+}
+
+button {
+    padding: 10px 20px;
+    border: none;
+    border-radius: 5px;
+    background: #2196F3;
+    color: white;
+    cursor: pointer;
+    font-weight: bold;
+}
+
+button:hover {
+    background: #1976D2;
+}
+
 .metrics-container {
     flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    overflow-y: auto;
+}
+
+.metric-box {
     background: white;
     padding: 20px;
     border-radius: 10px;
     box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.metric-box h3 {
+    margin: 0 0 15px 0;
+    color: #333;
 }
 
 #angleChart {
@@ -45,14 +85,27 @@ video {
     margin-bottom: 20px;
 }
 
-.metric-box {
-    background: #f8f8f8;
-    padding: 15px;
-    border-radius: 8px;
-    margin-bottom: 15px;
+#jointAngles, #movementMetrics {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 10px;
 }
 
-.metric-box h3 {
-    margin: 0 0 10px 0;
-    color: #333;
+.metric-value {
+    background: #f8f8f8;
+    padding: 10px;
+    border-radius: 5px;
+    text-align: center;
+}
+
+.metric-label {
+    font-weight: bold;
+    color: #666;
+    font-size: 0.9em;
+}
+
+.metric-number {
+    font-size: 1.2em;
+    color: #2196F3;
+    margin-top: 5px;
 } 

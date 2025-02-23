@@ -1,46 +1,90 @@
-async function setupCamera() {
-    const video = document.getElementById('video');
-    const stream = await navigator.mediaDevices.getUserMedia({
-        video: { width: 640, height: 480 },
-        audio: false
-    });
-    video.srcObject = stream;
-    
-    return new Promise(resolve => {
-        video.onloadedmetadata = () => {
-            video.play();
-            resolve(video);
-        };
-    });
-}
-
-async function main() {
-    const video = await setupCamera();
-    const canvas = document.getElementById('output');
-    canvas.width = video.width;
-    canvas.height = video.height;
-
-    const detector = new PoseDetector();
-    await detector.initialize();
-
-    const visualizer = new PoseVisualizer(canvas);
-    const analyzer = new MovementAnalyzer();
-
-    async function detectAndDraw() {
-        const pose = await detector.detectPose(video);
+class MovementAnalysisApp {
+    constructor() {
+        this.video = document.getElementById('video');
+        this.canvas = document.getElementById('output');
+        this.startBtn = document.getElementById('startBtn');
+        this.resetBtn = document.getElementById('resetBtn');
         
-        visualizer.clear();
-        if (pose) {
-            visualizer.drawKeypoints(pose);
-            visualizer.drawSkeleton(pose);
-            analyzer.updateMetrics(pose, detector);
-        }
+        this.detector = new PoseDetector();
+        this.visualizer = new PoseVisualizer(this.canvas);
+        this.analyzer = new MovementAnalyzer();
         
-        requestAnimationFrame(detectAndDraw);
+        this.isRunning = false;
+        this.setupEventListeners();
     }
 
-    detectAndDraw();
+    async initialize() {
+        try {
+            // Setup camera
+            const stream = await navigator.mediaDevices.getUserMedia({
+                video: { width: 640, height: 480 },
+                audio: false
+            });
+            this.video.srcObject = stream;
+            
+            return new Promise(resolve => {
+                this.video.onloadedmetadata = () => {
+                    this.video.play();
+                    this.canvas.width = this.video.width;
+                    this.canvas.height = this.video.height;
+                    resolve(true);
+                };
+            });
+        } catch (error) {
+            console.error('Error initializing camera:', error);
+            return false;
+        }
+    }
+
+    setupEventListeners() {
+        this.startBtn.addEventListener('click', () => this.toggleAnalysis());
+        this.resetBtn.addEventListener('click', () => this.reset());
+    }
+
+    async toggleAnalysis() {
+        if (!this.isRunning) {
+            const initialized = await this.detector.initialize();
+            if (!initialized) {
+                alert('Failed to initialize pose detector');
+                return;
+            }
+            this.isRunning = true;
+            this.startBtn.textContent = 'Stop Analysis';
+            this.detectAndDraw();
+        } else {
+            this.isRunning = false;
+            this.startBtn.textContent = 'Start Analysis';
+        }
+    }
+
+    reset() {
+        this.analyzer.reset();
+        this.visualizer.clear();
+    }
+
+    async detectAndDraw() {
+        if (!this.isRunning) return;
+
+        const pose = await this.detector.detectPose(this.video);
+        
+        this.visualizer.clear();
+        if (pose) {
+            const angles = this.detector.calculateJointAngles(pose);
+            this.visualizer.drawSkeleton(pose);
+            this.visualizer.drawKeypoints(pose);
+            this.visualizer.drawAngles(pose, angles);
+            this.analyzer.updateMetrics(pose, this.detector);
+        }
+        
+        requestAnimationFrame(() => this.detectAndDraw());
+    }
 }
 
 // Start the application when the page loads
-window.onload = main; 
+window.onload = async () => {
+    const app = new MovementAnalysisApp();
+    const initialized = await app.initialize();
+    if (!initialized) {
+        alert('Failed to initialize camera');
+    }
+}; 
