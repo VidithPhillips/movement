@@ -1,11 +1,11 @@
 class MediaPipePose {
   constructor(video, canvas) {
-    // Add initialization check
+    // Verify dependencies
     if (!window.THREE) {
-      throw new Error('THREE.js must be loaded before MediaPipePose');
+      throw new Error('THREE.js must be loaded first');
     }
     if (!window.PoseVisualizer3D) {
-      throw new Error('PoseVisualizer3D must be loaded before MediaPipePose');
+      throw new Error('PoseVisualizer3D must be loaded first');
     }
 
     this.video = video;

@@ -1,127 +1,70 @@
 class PoseVisualizer3D {
     constructor(container) {
-        // Check if Three.js is loaded
-        if (typeof THREE === 'undefined') {
-            throw new Error('Three.js is not loaded');
-        }
-        if (typeof THREE.OrbitControls === 'undefined') {
-            console.warn('OrbitControls not loaded, skipping controls');
+        if (!window.THREE) {
+            throw new Error('THREE.js must be loaded first');
         }
         this.container = container;
         this.init();
     }
 
     init() {
-        try {
-            // Set up Three.js scene
-            this.scene = new THREE.Scene();
-            this.camera = new THREE.PerspectiveCamera(75, 640/480, 0.1, 1000);
-            this.renderer = new THREE.WebGLRenderer({ 
-                antialias: true, 
-                alpha: true,
-                canvas: document.createElement('canvas')
-            });
-            
-            // Set renderer size and add to container
-            this.renderer.setSize(640, 480);
-            this.container.appendChild(this.renderer.domElement);
+        // Create scene, camera, renderer
+        this.scene = new THREE.Scene();
+        this.camera = new THREE.PerspectiveCamera(75, 640/480, 0.1, 1000);
+        this.renderer = new THREE.WebGLRenderer({ 
+            antialias: true,
+            alpha: true
+        });
+        
+        this.renderer.setSize(640, 480);
+        this.container.appendChild(this.renderer.domElement);
 
-            // Add lights with more intensity
-            const ambientLight = new THREE.AmbientLight(0x404040, 2);
-            const directionalLight = new THREE.DirectionalLight(0xffffff, 2);
-            directionalLight.position.set(0, 1, 2);
-            this.scene.add(ambientLight);
-            this.scene.add(directionalLight);
+        // Add lights
+        const ambientLight = new THREE.AmbientLight(0x404040, 2);
+        const directionalLight = new THREE.DirectionalLight(0xffffff, 2);
+        directionalLight.position.set(0, 1, 2);
+        this.scene.add(ambientLight);
+        this.scene.add(directionalLight);
 
-            // Initialize body parts
-            this.initializeBodyParts();
+        // Initialize body parts
+        this.initializeBodyParts();
 
-            // Update camera position for better viewing angle
-            this.camera.position.set(0, 1, 3);
-            this.camera.lookAt(0, 0, 0);
+        // Set camera position
+        this.camera.position.set(0, 1, 3);
+        this.camera.lookAt(0, 0, 0);
 
-            // Add orbit controls if available
-            if (typeof THREE.OrbitControls !== 'undefined') {
-                this.controls = new THREE.OrbitControls(this.camera, this.renderer.domElement);
-                this.controls.enableDamping = true;
-                this.controls.dampingFactor = 0.05;
-            }
-
-            // Make renderer background transparent
-            this.renderer.setClearColor(0x000000, 0);
-
-            // Start animation
-            this.animate();
-            
-            console.log('3D visualization initialized successfully');
-        } catch (error) {
-            console.error('Failed to initialize 3D visualization:', error);
-        }
+        // Start animation loop
+        this.animate();
     }
 
     initializeBodyParts() {
-        // Create geometries for body parts with better materials
-        const humanMaterial = new THREE.MeshPhongMaterial({
+        // Create a single shared material
+        this.sharedMaterial = new THREE.MeshPhongMaterial({
             color: 0x2194ce,
             transparent: true,
             opacity: 0.8,
-            shininess: 30,
-            specular: 0x666666
+            shininess: 30
         });
 
+        // Create body parts using shared material
         this.bodyParts = {
-            torso: this.createBodyPart(0.3, 0.5, 0.2, false, humanMaterial),
-            head: this.createBodyPart(0.15, 0.15, 0.15, true, humanMaterial),
-            leftArm: this.createLimb(0.1, 0.3, humanMaterial),
-            rightArm: this.createLimb(0.1, 0.3, humanMaterial),
-            leftLeg: this.createLimb(0.12, 0.4, humanMaterial),
-            rightLeg: this.createLimb(0.12, 0.4, humanMaterial),
-            // Add joints as spheres
-            joints: this.createJoints(humanMaterial)
+            torso: this.createMesh(new THREE.BoxGeometry(0.3, 0.5, 0.2)),
+            head: this.createMesh(new THREE.SphereGeometry(0.15)),
+            leftArm: this.createMesh(new THREE.CylinderGeometry(0.05, 0.05, 0.3)),
+            rightArm: this.createMesh(new THREE.CylinderGeometry(0.05, 0.05, 0.3)),
+            leftLeg: this.createMesh(new THREE.CylinderGeometry(0.06, 0.06, 0.4)),
+            rightLeg: this.createMesh(new THREE.CylinderGeometry(0.06, 0.06, 0.4))
         };
 
-        // Add shadow casting
+        // Add all parts to scene
         Object.values(this.bodyParts).forEach(part => {
-            if (Array.isArray(part)) {
-                part.forEach(joint => {
-                    joint.castShadow = true;
-                    this.scene.add(joint);
-                });
-            } else {
-                part.castShadow = true;
-                this.scene.add(part);
-            }
+            this.scene.add(part);
         });
     }
 
-    createBodyPart(width, height, depth, isSphere = false, material) {
-        let geometry;
-        
-        if (isSphere) {
-            geometry = new THREE.SphereGeometry(width);
-        } else {
-            geometry = new THREE.BoxGeometry(width, height, depth);
-        }
-        
-        return new THREE.Mesh(geometry, material);
-    }
-
-    createLimb(width, height, material) {
-        const geometry = new THREE.CylinderGeometry(width/2, width/2, height);
-        return new THREE.Mesh(geometry, material);
-    }
-
-    createJoints(material) {
-        const joints = [];
-        const jointRadius = 0.05;
-        for (let i = 0; i < 33; i++) { // MediaPipe has 33 landmarks
-            const joint = new THREE.Mesh(
-                new THREE.SphereGeometry(jointRadius),
-                material.clone()
-            );
-            joints.push(joint);
-        }
-        return joints;
+    // Helper method to create mesh with shared material
+    createMesh(geometry) {
+        return new THREE.Mesh(geometry, this.sharedMaterial);
     }
 
     updatePose(pose) {

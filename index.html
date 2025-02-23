@@ -51,56 +51,30 @@
         </div>
     </div>
     
-    <!-- Load all dependencies first -->
+    <!-- 1. Load Three.js dependencies first -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+
+    <!-- 2. Load MediaPipe dependencies -->
     <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@mediapipe/control_utils/control_utils.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@mediapipe/drawing_utils/drawing_utils.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@mediapipe/pose/pose.js"></script>
 
-    <!-- Load application scripts in correct order -->
+    <!-- 3. Load our application scripts in dependency order -->
     <script src="js/3dVisualizer.js"></script>
     <script src="js/analysis.js"></script>
-    <script src="js/exerciseDetector.js"></script>
-    <script src="js/feedback.js"></script>
     <script src="js/visualization.js"></script>
     <script src="js/mediapipePose.js"></script>
     <script src="js/main.js"></script>
-    
-    <!-- Add error handling for script loading -->
-    <script>
-        window.addEventListener('error', function(e) {
-            if (e.target.tagName === 'SCRIPT') {
-                console.error('Script loading failed:', e.target.src);
-                document.getElementById('loading').innerHTML = `
-                    <div class="loading-error">
-                        Failed to load required libraries. Please check your internet connection and refresh.
-                    </div>`;
-            }
-        }, true);
-    </script>
 
-    <!-- Add at the end of body -->
+    <!-- 4. Add initialization verification -->
     <script>
-        // Check if all required scripts are loaded
-        const requiredScripts = [
-            'THREE',
-            'PoseVisualizer3D',
-            'MovementAnalyzer',
-            'MediaPipePose'
-        ];
-        
-        window.addEventListener('load', () => {
-            const missingScripts = requiredScripts.filter(script => {
-                const loaded = window[script] !== undefined;
-                console.log(`${script} loaded:`, loaded);
-                return !loaded;
-            });
-            
-            if (missingScripts.length > 0) {
-                console.error('Missing required scripts:', missingScripts);
-            }
+        window.addEventListener('DOMContentLoaded', () => {
+            console.log('Checking script loading status:');
+            console.log('THREE.js:', typeof THREE !== 'undefined');
+            console.log('PoseVisualizer3D:', typeof PoseVisualizer3D !== 'undefined');
+            console.log('MovementAnalyzer:', typeof MovementAnalyzer !== 'undefined');
         });
     </script>
 </body>
