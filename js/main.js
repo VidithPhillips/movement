@@ -11,6 +11,7 @@ class MovementAnalysisApp {
         this.analyzer = new MovementAnalyzer();
         
         this.isRunning = false;
+        this.analyticsInterval = null; // To hold interval for analytics updates
         this.setupEventListeners();
     }
 
@@ -63,10 +64,19 @@ class MovementAnalysisApp {
             }
             this.isRunning = true;
             this.startBtn.textContent = 'Stop Analysis';
+            // Start the drawing loop
             this.detectAndDraw();
+            // Start analytics updates every 500ms
+            this.analyticsInterval = setInterval(() => {
+                const pose = this.detector.lastPose;
+                if (pose) {
+                    this.analyzer.updateMetrics(pose, this.detector);
+                }
+            }, 500);
         } else {
             this.isRunning = false;
             this.startBtn.textContent = 'Start Analysis';
+            clearInterval(this.analyticsInterval);
         }
     }
 
@@ -89,7 +99,6 @@ class MovementAnalysisApp {
             this.visualizer.drawSkeleton(pose);
             this.visualizer.drawKeypoints(pose);
             this.visualizer.drawAngles(pose, angles);
-            this.analyzer.updateMetrics(pose, this.detector);
         }
         
         requestAnimationFrame(() => this.detectAndDraw());

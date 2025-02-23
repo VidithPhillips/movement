@@ -122,4 +122,23 @@ class PoseDetector {
 
         return speeds;
     }
+
+    calculateFaceMetrics(pose) {
+        const metrics = {};
+        // Compute interocular distance (distance between left and right eyes)
+        const leftEye = this.getKeypoint(pose, 'left_eye');
+        const rightEye = this.getKeypoint(pose, 'right_eye');
+        if (leftEye && rightEye) {
+            const dx = rightEye.x - leftEye.x;
+            const dy = rightEye.y - leftEye.y;
+            metrics.eyeDistance = Math.sqrt(dx * dx + dy * dy);
+        }
+        // Also return the nose coordinates
+        const nose = this.getKeypoint(pose, 'nose');
+        if (nose) {
+            metrics.noseX = nose.x;
+            metrics.noseY = nose.y;
+        }
+        return metrics;
+    }
 } 
