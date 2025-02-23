@@ -75,7 +75,7 @@ class PoseVisualizer3D {
     }
 
     createBodyPart(width, height, depth, isSphere = false, material) {
-        let geometry, material;
+        let geometry;
         
         if (isSphere) {
             geometry = new THREE.SphereGeometry(width);
@@ -83,22 +83,11 @@ class PoseVisualizer3D {
             geometry = new THREE.BoxGeometry(width, height, depth);
         }
         
-        material = new THREE.MeshPhongMaterial({
-            color: 0x00ff00,
-            transparent: true,
-            opacity: 0.8
-        });
-
         return new THREE.Mesh(geometry, material);
     }
 
     createLimb(width, height, material) {
         const geometry = new THREE.CylinderGeometry(width/2, width/2, height);
-        const material = new THREE.MeshPhongMaterial({
-            color: 0x00ff00,
-            transparent: true,
-            opacity: 0.8
-        });
         return new THREE.Mesh(geometry, material);
     }
 

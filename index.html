@@ -17,6 +17,7 @@
     <script src="https://cdn.jsdelivr.net/npm/@mediapipe/pose/pose.js"></script>
     <!-- Add Three.js for 3D visualization -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
 </head>
 <body>
     <div class="container">
@@ -48,8 +49,11 @@
         </div>
     </div>
     
-    <script src="js/analysis.js"></script>
+    <!-- Load application scripts in correct order -->
     <script src="js/3dVisualizer.js"></script>
+    <script src="js/analysis.js"></script>
+    <script src="js/exerciseDetector.js"></script>
+    <script src="js/feedback.js"></script>
     <script src="js/visualization.js"></script>
     <script src="js/mediapipePose.js"></script>
     <script src="js/main.js"></script>
