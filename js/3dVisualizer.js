@@ -125,6 +125,10 @@
             window.addEventListener('beforeunload', () => {
                 this.dispose();
             });
+
+            window.addEventListener('pose-updated', (event) => {
+                this.updatePose(event.detail);
+            });
         }
 
         reduceQuality() {

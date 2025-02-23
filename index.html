@@ -7,95 +7,30 @@
     <link rel="icon" type="image/x-icon" href="data:image/x-icon;,">
     <link rel="preconnect" href="https://cdn.jsdelivr.net">
     <link rel="preconnect" href="https://cdn.jsdelivr.net/npm/@mediapipe">
-    <title>Movement Analysis AI</title>
+    <title>Movement Analysis</title>
     <link rel="stylesheet" href="styles.css">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500&display=swap" rel="stylesheet">
     
-    <!-- Core infrastructure first -->
-    <script src="js/core/ApplicationCore.js"></script>
-    
-    <!-- Three.js dependencies -->
+    <!-- Core Dependencies -->
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/pose/pose.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/drawing_utils/drawing_utils.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
 </head>
 <body>
     <div class="container">
-        <div class="main-content">
-            <div class="video-container">
-                <video id="video" playsinline autoplay muted crossorigin="anonymous"></video>
-                <canvas id="output" width="640" height="480"></canvas>
-                <div id="loading" class="loading-overlay">
-                    <div class="loading-spinner"></div>
-                    <div class="loading-text">Initializing...</div>
-                </div>
-            </div>
-            <div class="metrics-panel">
-                <div class="metric-box">
-                    <h3>Body Angles</h3>
-                    <div id="bodyAngles" class="metric-grid"></div>
-                </div>
-                <div class="metrics-row">
-                    <div class="metric-box">
-                        <h3>Head & Face Analysis</h3>
-                        <div id="headFaceMetrics" class="metric-grid"></div>
-                    </div>
-                    <div class="metric-box">
-                        <h3>Posture Analysis</h3>
-                        <div id="postureMetrics" class="metric-grid"></div>
-                    </div>
-                </div>
-            </div>
+        <div class="video-container">
+            <video id="video" playsinline></video>
+            <canvas id="output"></canvas>
+        </div>
+        <div class="metrics-panel">
+            <div id="movement-metrics"></div>
         </div>
     </div>
-    
-    <!-- Enhanced initialization script -->
-    <script>
-        let app = null;
 
-        async function initializeApp() {
-            try {
-                // Initialize core systems
-                await ResourceManager.initialize();
-                
-                // Load MediaPipe dependencies first
-                await Promise.all([
-                    loadScript('https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js'),
-                    loadScript('https://cdn.jsdelivr.net/npm/@mediapipe/drawing_utils/drawing_utils.js'),
-                    loadScript('https://cdn.jsdelivr.net/npm/@mediapipe/pose/pose.js')
-                ]);
-                
-                // Load application scripts in correct dependency order
-                await loadScript('js/3dVisualizer.js');
-                await Promise.all([
-                    loadScript('js/analysis.js'),
-                    loadScript('js/visualization.js')
-                ]);
-                await loadScript('js/mediapipePose.js');
-                await loadScript('js/exerciseDetector.js');
-                await loadScript('js/feedback.js');
-                await loadScript('js/main.js');
-
-                // Initialize application
-                app = new MovementAnalysisApp();
-                await app.initialize();
-            } catch (error) {
-                await ErrorHandler.handleError(error, 'initialization');
-            }
-        }
-
-        // Handle cleanup on page unload
-        window.addEventListener('beforeunload', () => {
-            if (app) {
-                app.dispose();
-            }
-        });
-
-        // Start initialization when DOM is ready
-        if (document.readyState === 'loading') {
-            document.addEventListener('DOMContentLoaded', initializeApp);
-        } else {
-            initializeApp();
-        }
-    </script>
+    <!-- Application Scripts -->
+    <script src="js/3dVisualizer.js"></script>
+    <script src="js/analysis.js"></script>
+    <script src="js/main.js"></script>
 </body>
 </html> 

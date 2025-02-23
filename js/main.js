@@ -1,3 +1,40 @@
+class MovementAnalysis {
+    constructor() {
+        this.initializeComponents();
+        this.setupCamera();
+    }
+
+    initializeComponents() {
+        // Get DOM elements
+        this.video = document.getElementById('video');
+        this.canvas = document.getElementById('output');
+        this.canvas.width = 640;
+        this.canvas.height = 480;
+        
+        // Initialize components
+        this.pose = new MediaPipePose(this.video, this.canvas);
+        this.analyzer = new MovementAnalyzer('movement-metrics');
+        this.visualizer = new PoseVisualizer3D(document.querySelector('.video-container'));
+    }
+
+    async setupCamera() {
+        const stream = await navigator.mediaDevices.getUserMedia({
+            video: { width: 640, height: 480 },
+            audio: false
+        });
+        this.video.srcObject = stream;
+        await this.video.play();
+        
+        // Start pose detection
+        await this.pose.start();
+    }
+}
+
+// Start when page loads
+document.addEventListener('DOMContentLoaded', () => {
+    new MovementAnalysis();
+});
+
 class MovementAnalysisApp {
     constructor() {
         console.log('Creating MovementAnalysisApp instance');
