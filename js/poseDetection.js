@@ -41,12 +41,18 @@ class PoseDetector {
             await tf.ready();
             console.log('TensorFlow backend ready:', tf.getBackend());
             
-            const model = poseDetection.SupportedModels.MOVENET;
+            // Explicitly check if model exists
+            if (!poseDetection.SupportedModels || !poseDetection.SupportedModels.MoveNet) {
+                throw new Error('MoveNet model not available');
+            }
+            
+            const model = poseDetection.SupportedModels.MoveNet;
             const detectorConfig = {
-                modelType: poseDetection.movenet.modelType.SINGLEPOSE_LIGHTNING,
+                modelType: 'lightning',
                 enableSmoothing: true,
                 scoreThreshold: 0.2,
-                modelUrl: 'https://tfhub.dev/google/movenet/singlepose/lightning/4'
+                enableTracking: true,
+                multiPoseMaxDimension: 256
             };
 
             console.log('Creating detector with config:', detectorConfig);
