@@ -30,10 +30,10 @@ class PoseDetector {
         try {
             console.log('Starting detector initialization...');
             
-            if (typeof tf === 'undefined') {
+            if (!window.tf) {
                 throw new Error('TensorFlow.js not loaded');
             }
-            if (typeof poseDetection === 'undefined') {
+            if (!window.poseDetection) {
                 throw new Error('Pose-detection library not loaded');
             }
             
@@ -41,13 +41,12 @@ class PoseDetector {
             await tf.ready();
             console.log('TensorFlow backend ready:', tf.getBackend());
             
-            console.log('Available models:', poseDetection.SupportedModels);
-            const model = 'MoveNet'; // Use string directly instead of enum
+            // Use correct model initialization
+            const model = 'MoveNet';
             const detectorConfig = {
                 modelType: 'lightning',
                 enableSmoothing: true,
-                scoreThreshold: 0.2,
-                modelUrl: undefined // Let it use default URL
+                scoreThreshold: 0.3
             };
 
             console.log('Creating detector with config:', detectorConfig);
@@ -74,32 +73,34 @@ class PoseDetector {
                 console.warn('Video not ready');
                 return null;
             }
+
             const poses = await this.detector.estimatePoses(video, {
                 flipHorizontal: true,
                 maxPoses: 1,
-                scoreThreshold: 0.2,  // Lower threshold for better detection
+                scoreThreshold: 0.3,
                 staticImageMode: false,
                 enableSmoothing: true
             });
 
             if (poses.length > 0) {
                 const pose = poses[0];
+                // Validate pose data
+                if (!pose.keypoints || pose.keypoints.length === 0) {
+                    console.warn('Invalid pose data');
+                    return null;
+                }
                 this.lastPose = pose;
                 return pose;
             }
             return null;
         } catch (error) {
-            return null;  // Silent fail for performance
+            console.warn('Pose detection error:', error);
+            return null;
         }
     }
 
     getKeypoint(pose, name) {
         if (!pose || !pose.keypoints) return null;
-        // MediaPipe uses keypoints3D for better accuracy
-        if (pose.keypoints3D) {
-            const kp = pose.keypoints3D.find(kp => kp.name === name);
-            if (kp) return kp;
-        }
         // Fallback to 2D keypoints
         return pose.keypoints.find(kp => kp.name === name);
     }
