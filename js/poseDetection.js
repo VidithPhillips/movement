@@ -20,27 +20,26 @@ class PoseDetector {
     async initialize() {
         try {
             console.log('Starting detector initialization...');
-            // Wait for MediaPipe to be ready
-            if (typeof window.pose === 'undefined') {
-                console.log('Waiting for MediaPipe to load...');
-                await new Promise(resolve => setTimeout(resolve, 1000));
-            }
+            // Make sure all dependencies are loaded
+            await Promise.all([
+                tf.ready(),
+                new Promise(resolve => {
+                    if (window.poseDetection) resolve();
+                    else window.addEventListener('load', resolve);
+                })
+            ]);
+            console.log('Dependencies loaded');
 
             const model = poseDetection.SupportedModels.BLAZEPOSE;
             const detectorConfig = {
                 enableSmoothing: true,
                 runtime: 'mediapipe',
-                modelType: 'full',  // Try full model instead of lite
+                solutionPath: 'https://cdn.jsdelivr.net/npm/@mediapipe/pose',
+                modelType: 'full',
                 enableTracking: true,
-                smoothLandmarks: true,
-                minPoseScore: 0.3
+                refineLandmarks: true
             };
             
-            // Check if required dependencies are loaded
-            if (!window.tf || !window.poseDetection) {
-                throw new Error('Required libraries not loaded');
-            }
-
             console.log('Creating detector with config:', detectorConfig);
             this.detector = await poseDetection.createDetector(model, detectorConfig);
             if (!this.detector) {
