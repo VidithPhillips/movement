@@ -1,48 +1,36 @@
-# Movement Analysis System
+# Professional Movement Analysis
 
-A web-based real-time movement analysis system that uses computer vision to track and analyze human movement through a standard webcam. The system leverages TensorFlow.js and MoveNet for pose estimation, providing immediate visual feedback and movement metrics directly in the browser.
+A real-time movement analysis tool that:
+- Tracks body pose and movement
+- Calculates joint angles and posture metrics
+- Provides real-time feedback and analysis
+
+## Technologies
+- HTML5 Canvas for visualization
+- CSS3 for styling
+- JavaScript for real-time processing
+- MediaPipe Pose for pose detection and tracking
 
 ## Features
+- Real-time pose detection
+- Joint angle calculations
+- Posture analysis
+- Face orientation tracking
+- Performance metrics
 
-- Real-time pose detection using MoveNet
-- Live skeleton overlay on video feed
-- Joint angle tracking and visualization
-- Movement speed analysis
-- Browser-based processing (no server required)
-- Responsive design for different screen sizes
+## Setup
+1. Clone the repository
+2. Open index.html in a modern web browser
+3. Grant camera permissions when prompted
+
+## Requirements
+- Modern web browser with WebGL support
+- Camera access
+- Internet connection (for loading MediaPipe libraries)
 
 ## Demo
 
 Access the live demo at: https://vidithphillips.github.io/movement/
-
-## Technologies Used
-
-- TensorFlow.js
-- MoveNet (Single-pose Lightning model)
-- Chart.js
-- HTML5 Canvas
-- Modern JavaScript (ES6+)
-
-## Getting Started
-
-### Prerequisites
-
-- A modern web browser (Chrome, Firefox, Safari, Edge)
-- Webcam access
-- Internet connection (for loading dependencies)
-
-### Local Development
-
-1. Clone the repository:
-   git clone https://github.com/VidithPhillips/movement.git
-
-2. Navigate to the project directory:
-   cd movement
-
-3. Serve the files using a local web server. For example, using Python:
-   python -m http.server 8000
-
-4. Open your browser and visit http://localhost:8000
 
 ## Project Structure
 
