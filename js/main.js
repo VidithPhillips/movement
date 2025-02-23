@@ -73,7 +73,9 @@ class MovementAnalysisApp {
 
     async toggleAnalysis() {
         if (!this.isRunning) {
+            document.getElementById('loading').style.display = 'flex';
             const initialized = await this.detector.initialize();
+            document.getElementById('loading').style.display = 'none';
             if (!initialized) {
                 alert('Failed to initialize pose detector');
                 return;

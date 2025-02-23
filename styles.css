@@ -133,7 +133,9 @@ video {
     padding: 10px;
     border-radius: 5px;
     text-align: center;
-    transition: background-color 0.3s ease;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
 }
 
 .metric-value:hover {
@@ -150,4 +152,67 @@ video {
     font-size: 1.2em;
     color: #64B5F6;
     margin-top: 5px;
+}
+
+.loading-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0,0,0,0.7);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    z-index: 100;
+}
+
+.loading-spinner {
+    width: 50px;
+    height: 50px;
+    border: 3px solid #f3f3f3;
+    border-top: 3px solid #2196F3;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+    margin-bottom: 10px;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+.change-indicator {
+    display: inline-block;
+    margin-left: 8px;
+    font-size: 0.9em;
+    padding: 2px 6px;
+    border-radius: 4px;
+}
+
+.change-indicator.positive {
+    color: #4caf50;
+    background: rgba(76, 175, 80, 0.1);
+}
+
+.change-indicator.negative {
+    color: #f44336;
+    background: rgba(244, 67, 54, 0.1);
+}
+
+.change-indicator.neutral {
+    color: #9e9e9e;
+    background: rgba(158, 158, 158, 0.1);
+}
+
+.speed-value {
+    font-weight: bold;
+}
+
+.unit {
+    font-size: 0.8em;
+    color: #9e9e9e;
+    margin-left: 4px;
 } 

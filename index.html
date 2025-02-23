@@ -23,8 +23,12 @@
     <div class="container">
         <div class="main-content">
             <div class="video-container">
-                <video id="video" playsinline></video>
+                <video id="video" playsinline autoplay muted></video>
                 <canvas id="output" width="640" height="480"></canvas>
+                <div id="loading" class="loading-overlay">
+                    <div class="loading-spinner"></div>
+                    <div class="loading-text">Initializing...</div>
+                </div>
                 <div class="controls">
                     <button id="startBtn" class="primary-btn">Start Analysis</button>
                     <button id="baselineBtn" class="secondary-btn">Capture Baseline</button>
@@ -32,18 +36,17 @@
                 </div>
             </div>
             <div class="metrics-panel">
-                <div class="metric-box primary">
-                    <h3>Joint Angles</h3>
-                    <canvas id="angleChart"></canvas>
+                <div class="metric-box">
+                    <h3>Body Angles</h3>
                     <div id="jointAngles" class="metric-grid"></div>
                 </div>
                 <div class="metrics-row">
                     <div class="metric-box">
-                        <h3>Movement Analysis</h3>
+                        <h3>Head & Face Analysis</h3>
                         <div id="movementMetrics" class="metric-grid"></div>
                     </div>
                     <div class="metric-box">
-                        <h3>Face Metrics</h3>
+                        <h3>Posture Analysis</h3>
                         <div id="faceMetrics" class="metric-grid"></div>
                     </div>
                 </div>
