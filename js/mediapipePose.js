@@ -5,20 +5,22 @@ class MediaPipePose {
     this.ctx = canvas.getContext('2d');
     this.isRunning = false;
 
-    // Initialize 3D visualizer after ensuring the class is loaded
+    // Initialize 3D visualizer after ensuring dependencies are loaded
     try {
+      if (typeof THREE === 'undefined') {
+        throw new Error('Three.js is not loaded');
+      }
       if (typeof PoseVisualizer3D === 'undefined') {
-        throw new Error('PoseVisualizer3D class not loaded');
+        throw new Error('PoseVisualizer3D is not loaded');
       }
       const container = document.querySelector('.video-container');
       if (!container) {
         throw new Error('Video container not found');
       }
       this.visualizer3D = new PoseVisualizer3D(container);
-      console.log('3D visualizer initialized');
+      console.log('3D visualizer initialized successfully');
     } catch (error) {
       console.error('Failed to initialize 3D visualizer:', error);
-      // Continue without 3D visualization
       this.visualizer3D = null;
     }
 
