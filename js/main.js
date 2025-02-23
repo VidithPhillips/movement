@@ -125,9 +125,10 @@ class MovementAnalysisApp {
 
 // Start the application when the page loads
 window.onload = async () => {
-    const app = new MovementAnalysisApp();
-    const initialized = await app.initialize();
-    if (!initialized) {
-        alert('Failed to initialize camera');
-    }
+    const video = document.getElementById('video');
+    const canvas = document.getElementById('output');
+    
+    // Create and start MediaPipe pose detection.
+    const mpPose = new MediaPipePose(video, canvas);
+    await mpPose.start();
 }; 
