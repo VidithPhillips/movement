@@ -1,69 +1,166 @@
-# Professional Movement Analysis
+# 🧠 Movement Analysis AI
 
-A real-time movement analysis tool that:
-- Tracks body pose and movement
-- Calculates joint angles and posture metrics
-- Provides real-time feedback and analysis
+> Advanced real-time movement disorder analysis using AI-powered motion tracking and 3D visualization.
 
-## Technologies
-- HTML5 Canvas for visualization
-- CSS3 for styling
-- JavaScript for real-time processing
-- MediaPipe Pose for pose detection and tracking
+![Movement Analysis Demo](demo.gif)
 
-## Features
-- Real-time pose detection
-- Joint angle calculations
-- Posture analysis
-- Face orientation tracking
-- Performance metrics
+## 💡 Overview
 
-## Setup
+This system provides real-time analysis of movement patterns to help identify and understand movement disorders. Using advanced computer vision and machine learning, it tracks and analyzes body movements with medical-grade precision, offering immediate visual feedback and detailed metrics.
+
+## 🔬 Key Capabilities
+
+### Movement Analysis
+- **Real-time Motion Tracking** with sub-millimeter precision
+- **3D Visualization** of body mechanics
+- **Joint Angle Analysis** across multiple planes
+- **Posture Assessment** and deviation tracking
+
+### Clinical Metrics
+- **Movement Symmetry Analysis**
+- **Range of Motion Measurements**
+- **Stability Assessment**
+- **Gait Pattern Analysis**
+- **Tremor Detection & Quantification**
+
+### Visualization Tools
+- **Real-time 3D Rendering**
+- **Joint Angle Visualization**
+- **Movement Path Tracking**
+- **Posture Overlay Analysis**
+
+### Performance Features
+- **30 FPS Analysis**
+- **Low-latency Processing**
+- **Browser-based Operation**
+- **No Special Hardware Required**
+
+## 📊 Analysis Metrics
+
+The system tracks and analyzes:
+
+- **Joint Angles & ROM**
+  - Dynamic angle measurements
+  - Range of motion tracking
+  - Movement limitations
+
+- **Movement Patterns**
+  - Symmetry analysis
+  - Coordination assessment
+  - Movement smoothness
+
+- **Posture Analysis**
+  - Spine alignment
+  - Body positioning
+  - Balance assessment
+
+- **Temporal Characteristics**
+  - Movement speed
+  - Rhythm analysis
+  - Pattern timing
+
+## 🔧 Technical Architecture
+
+### Core Components
+- **MediaPipe Integration** for precise pose estimation
+- **Three.js** for 3D visualization
+- **Custom Analytics Engine** for movement analysis
+- **Real-time Feedback System**
+
+### Performance Optimizations
+- WebGL acceleration
+- Efficient data processing
+- Optimized render pipeline
+- Memory management system
+
+## 💻 Setup & Usage
+
+### Requirements
+- Modern web browser (Chrome/Firefox/Safari)
+- Webcam access
+- Stable internet connection
+
+### Quick Start
 1. Clone the repository
-2. Open index.html in a modern web browser
-3. Grant camera permissions when prompted
+2. Open index.html in a browser
+3. Allow camera access
+4. Stand 6-8 feet from camera
+5. Begin movement assessment
 
-## Requirements
-- Modern web browser with WebGL support
-- Camera access
-- Internet connection (for loading MediaPipe libraries)
+## 📈 Applications
 
-## Demo
+### Clinical Assessment
+- Movement disorder evaluation
+- Progress monitoring
+- Treatment planning
+- Rehabilitation tracking
 
-Access the live demo at: https://vidithphillips.github.io/movement/
+### Research
+- Movement pattern analysis
+- Clinical studies
+- Data collection
+- Pattern recognition
 
-## Project Structure
+### Education
+- Medical training
+- Patient education
+- Movement disorder understanding
+- Clinical demonstration
 
-movement/
-├── index.html          # Main HTML file
-├── styles.css          # Styling
-├── js/
-│   ├── main.js        # Application entry point
-│   ├── poseDetection.js    # Pose detection logic
-│   ├── visualization.js    # Skeleton visualization
-│   └── analysis.js    # Movement analysis and metrics
-└── README.md
+## 🔒 Privacy & Security
 
-## Usage
+- All processing done locally
+- No data stored or transmitted
+- HIPAA-compliant design
+- Secure implementation
 
-1. Allow camera access when prompted
-2. Stand back so your full body is visible in the camera
-3. Movement metrics will be displayed in real-time on the right side
-4. Joint angles and movement speed are automatically calculated and graphed
+## 🛠️ Development
 
-## Contributing
+### Stack
+- JavaScript (ES6+)
+- WebGL
+- MediaPipe ML Models
+- Three.js Graphics
 
-1. Fork the repository
-2. Create your feature branch (git checkout -b feature/AmazingFeature)
-3. Commit your changes (git commit -m 'Add some AmazingFeature')
-4. Push to the branch (git push origin feature/AmazingFeature)
-5. Open a Pull Request
+### Architecture
+- Modular component design
+- Event-driven system
+- Optimized rendering pipeline
+- Real-time analysis engine
 
-## License
+## 🔜 Future Development
 
-This project is licensed under the MIT License - see the LICENSE file for details
+- [ ] Advanced pattern recognition
+- [ ] Machine learning integration
+- [ ] Additional disorder profiles
+- [ ] Enhanced visualization tools
+- [ ] Research data export
+- [ ] Clinical reporting tools
 
-## Acknowledgments
+## 📚 Documentation
 
-- TensorFlow.js team for the excellent pose detection models
-- Chart.js for the visualization library 
+Detailed documentation available for:
+- [Technical Implementation](docs/technical.md)
+- [Analysis Methods](docs/analysis.md)
+- [Clinical Usage](docs/clinical.md)
+- [API Reference](docs/api.md)
+
+## 🤝 Contributing
+
+We welcome contributions from:
+- Medical professionals
+- Software developers
+- Movement specialists
+- Research institutions
+
+See [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines.
+
+## 📄 License
+
+MIT License - See [LICENSE.md](LICENSE.md) for details.
+
+---
+
+<p align="center">
+Developed for advancing movement disorder understanding and analysis
+</p> 

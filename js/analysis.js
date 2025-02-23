@@ -1,5 +1,10 @@
 class MovementAnalyzer {
     constructor() {
+        this.initializeComponents();
+        this.setupPerformanceOptimizations();
+    }
+
+    initializeComponents() {
         // Cache DOM elements
         this.bodyAnglesDiv = document.getElementById('bodyAngles');
         this.headFaceDiv = document.getElementById('headFaceMetrics');
@@ -46,9 +51,28 @@ class MovementAnalyzer {
         };
 
         this.motionHistory = {
-            positions: new Array(100).fill(null), // Store last 100 positions
-            timestamps: []
+            positions: new Array(100).fill(null),
+            timestamps: [],
+            angles: {}
         };
+
+        // Initialize performance metrics
+        this.performanceMetrics = {
+            calculationTime: 0,
+            updateFrequency: 0,
+            lastUpdate: performance.now()
+        };
+    }
+
+    setupPerformanceOptimizations() {
+        // Use requestAnimationFrame for DOM updates
+        this.pendingUpdate = false;
+        this.updateQueue = new Map();
+
+        // Handle memory pressure
+        window.addEventListener('memory-pressure', () => {
+            this.reduceHistorySize();
+        });
     }
 
     setBaseline(angles) {
@@ -56,67 +80,74 @@ class MovementAnalyzer {
     }
 
     updateMetrics(results) {
-        if (!results.poseLandmarks) return;
+        const startTime = performance.now();
 
-        const landmarks = results.poseLandmarks;
-        
-        // Calculate angles
-        const angles = {
-            leftElbow: this.calculateAngle(
-                landmarks[11], // LEFT_SHOULDER
-                landmarks[13], // LEFT_ELBOW
-                landmarks[15]  // LEFT_WRIST
-            ),
-            rightElbow: this.calculateAngle(
-                landmarks[12], // RIGHT_SHOULDER
-                landmarks[14], // RIGHT_ELBOW
-                landmarks[16]  // RIGHT_WRIST
-            ),
-            leftKnee: this.calculateAngle(
-                landmarks[23], // LEFT_HIP
-                landmarks[25], // LEFT_KNEE
-                landmarks[27]  // LEFT_ANKLE
-            ),
-            rightKnee: this.calculateAngle(
-                landmarks[24], // RIGHT_HIP
-                landmarks[26], // RIGHT_KNEE
-                landmarks[28]  // RIGHT_ANKLE
-            )
-        };
+        try {
+            const landmarks = results.poseLandmarks;
+            if (!landmarks) return;
 
-        // Calculate posture metrics
-        const posture = {
-            spineAngle: this.calculateSpineAngle(landmarks),
-            shoulderLevel: this.calculateShoulderLevel(landmarks),
-            hipLevel: this.calculateHipLevel(landmarks)
-        };
+            // Calculate angles efficiently
+            const angles = this.calculateAnglesOptimized(landmarks);
+            
+            // Update motion history
+            this.updateMotionHistory(landmarks);
 
-        // Update DOM
-        this.updateBodyAnglesDOM(angles);
-        this.updatePostureDOM(posture);
-        this.updateHeadFaceDOM(this.calculateHeadMetrics(landmarks));
+            // Calculate performance metrics
+            const posture = this.calculatePostureMetrics(landmarks);
+            const headMetrics = this.calculateHeadMetrics(landmarks);
 
-        // Track motion history
-        this.updateMotionHistory(results.poseLandmarks);
-        
-        // Calculate velocity and acceleration
-        const motion = this.calculateMotionMetrics();
-        this.updateMotionDOM(motion);
+            // Queue DOM updates
+            this.queueDOMUpdate('angles', angles);
+            this.queueDOMUpdate('posture', posture);
+            this.queueDOMUpdate('head', headMetrics);
+
+            // Schedule render
+            this.scheduleRender();
+
+            // Update performance metrics
+            this.performanceMetrics.calculationTime = performance.now() - startTime;
+            this.performanceMetrics.updateFrequency = 1000 / (performance.now() - this.performanceMetrics.lastUpdate);
+            this.performanceMetrics.lastUpdate = performance.now();
+
+        } catch (error) {
+            ErrorHandler.handleError(error, 'MovementAnalyzer.updateMetrics');
+        }
     }
 
-    calculateAngle(a, b, c) {
+    calculateAnglesOptimized(landmarks) {
+        const angles = {};
+        
+        // Calculate joint angles using vectorized operations
+        const jointPairs = [
+            ['rightElbow', [this.landmarks.rightShoulder, this.landmarks.rightElbow, this.landmarks.rightWrist]],
+            ['leftElbow', [this.landmarks.leftShoulder, this.landmarks.leftElbow, this.landmarks.leftWrist]],
+            ['rightKnee', [this.landmarks.rightHip, this.landmarks.rightKnee, this.landmarks.rightAnkle]],
+            ['leftKnee', [this.landmarks.leftHip, this.landmarks.leftKnee, this.landmarks.leftAnkle]]
+        ];
+
+        for (const [name, [p1, p2, p3]] of jointPairs) {
+            angles[name] = this.calculateAngleVectorized(
+                landmarks[p1],
+                landmarks[p2],
+                landmarks[p3]
+            );
+        }
+
+        return angles;
+    }
+
+    calculateAngleVectorized(a, b, c) {
         if (!a || !b || !c) return null;
 
-        const radians = Math.atan2(
-            c.y - b.y,
-            c.x - b.x
-        ) - Math.atan2(
-            a.y - b.y,
-            a.x - b.x
-        );
+        // Use typed arrays for better performance
+        const vec1 = new Float32Array([a.x - b.x, a.y - b.y]);
+        const vec2 = new Float32Array([c.x - b.x, c.y - b.y]);
 
-        let angle = Math.abs(radians * 180.0 / Math.PI);
-        if (angle > 180.0) angle = 360 - angle;
+        const dot = vec1[0] * vec2[0] + vec1[1] * vec2[1];
+        const mag1 = Math.sqrt(vec1[0] * vec1[0] + vec1[1] * vec1[1]);
+        const mag2 = Math.sqrt(vec2[0] * vec2[0] + vec2[1] * vec2[1]);
+
+        const angle = Math.acos(dot / (mag1 * mag2)) * 180 / Math.PI;
         return angle;
     }
 
@@ -220,19 +251,54 @@ class MovementAnalyzer {
     }
 
     updateMotionHistory(landmarks) {
-        if (!landmarks) return;
-
-        // Store center position (hip point)
         const center = {
-            x: (landmarks[23].x + landmarks[24].x) / 2,
-            y: (landmarks[23].y + landmarks[24].y) / 2,
-            z: (landmarks[23].z + landmarks[24].z) / 2,
-            timestamp: Date.now()
+            x: (landmarks[this.landmarks.leftHip].x + landmarks[this.landmarks.rightHip].x) / 2,
+            y: (landmarks[this.landmarks.leftHip].y + landmarks[this.landmarks.rightHip].y) / 2,
+            z: (landmarks[this.landmarks.leftHip].z + landmarks[this.landmarks.rightHip].z) / 2,
+            timestamp: performance.now()
         };
 
         this.motionHistory.positions.push(center);
         this.motionHistory.positions.shift();
-        this.motionHistory.timestamps.push(Date.now());
+        this.motionHistory.timestamps.push(center.timestamp);
+
+        // Limit history size based on memory usage
+        if (this.motionHistory.timestamps.length > 1000) {
+            this.reduceHistorySize();
+        }
+    }
+
+    reduceHistorySize() {
+        const reduction = Math.floor(this.motionHistory.positions.length / 2);
+        this.motionHistory.positions = this.motionHistory.positions.slice(-reduction);
+        this.motionHistory.timestamps = this.motionHistory.timestamps.slice(-reduction);
+    }
+
+    queueDOMUpdate(type, data) {
+        this.updateQueue.set(type, data);
+    }
+
+    scheduleRender() {
+        if (!this.pendingUpdate) {
+            this.pendingUpdate = true;
+            requestAnimationFrame(() => this.render());
+        }
+    }
+
+    render() {
+        this.pendingUpdate = false;
+
+        if (this.updateQueue.has('angles')) {
+            this.updateBodyAnglesDOM(this.updateQueue.get('angles'));
+        }
+        if (this.updateQueue.has('posture')) {
+            this.updatePostureDOM(this.updateQueue.get('posture'));
+        }
+        if (this.updateQueue.has('head')) {
+            this.updateHeadFaceDOM(this.updateQueue.get('head'));
+        }
+
+        this.updateQueue.clear();
     }
 
     calculatePerformanceMetrics() {

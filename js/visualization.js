@@ -1,141 +1,244 @@
 class PoseVisualizer {
     constructor(canvas) {
+        this.initializeCanvas(canvas);
+        this.setupStyles();
+        this.setupOptimizations();
+        this.setupEventListeners();
+    }
+
+    initializeCanvas(canvas) {
         this.ctx = canvas.getContext('2d', {
             alpha: false,
             desynchronized: true,
             willReadFrequently: false
         });
 
-        // Set canvas size
-        canvas.width = 640;
-        canvas.height = 480;
+        this.canvas = canvas;
+        this.canvas.width = 640;
+        this.canvas.height = 480;
 
-        // MediaPipe POSE_CONNECTIONS will be used directly from the library
-        this.colors = {
-            keypoints: '#00ff00',    // Bright green for better visibility
-            skeleton: '#ffffff',      // White for skeleton
-            text: '#00ff00',         // Green text
-            outline: '#000000'       // Black outline for contrast
-        };
-        
-        this.textSettings = {
-            font: 'bold 16px Inter',
-            align: 'center',
-            baseline: 'middle'
-        };
-
-        // Pre-compile common values
-        this.keyPointRadius = 4;
-        this.lineWidth = 4;
-        this.outlineWidth = 6;
+        // Create off-screen canvas for double buffering
+        this.offscreenCanvas = new OffscreenCanvas(640, 480);
+        this.offscreenCtx = this.offscreenCanvas.getContext('2d');
     }
 
-    drawKeypoints(pose) {
-        if (!pose || !pose.keypoints) return;
-        
-        const ctx = this.ctx;
-        const canvasWidth = ctx.canvas.width;
-        const canvasHeight = ctx.canvas.height;
+    setupStyles() {
+        this.styles = {
+            keypoints: {
+                radius: 4,
+                colors: {
+                    default: '#00ff00',
+                    highlighted: '#ff0000',
+                    inactive: '#666666'
+                }
+            },
+            connections: {
+                width: 2,
+                colors: {
+                    default: '#ffffff',
+                    highlighted: '#00ff00',
+                    inactive: '#444444'
+                }
+            },
+            text: {
+                font: '14px Inter',
+                color: '#ffffff',
+                background: 'rgba(0,0,0,0.5)',
+                padding: 4
+            }
+        };
 
-        ctx.save();
-        ctx.fillStyle = this.colors.keypoints;
-        ctx.beginPath();
-        
-        pose.keypoints.forEach(keypoint => {
-            if (keypoint && keypoint.score > 0.2) {
-                // Convert normalized coordinates to pixel coordinates
-                const x = keypoint.x * canvasWidth;
-                const y = keypoint.y * canvasHeight;
-                ctx.arc(x, y, this.keyPointRadius, 0, 2 * Math.PI);
+        // Pre-calculate connection paths for performance
+        this.connectionPaths = POSE_CONNECTIONS.map(([start, end]) => ({
+            start,
+            end,
+            path: new Path2D()
+        }));
+    }
+
+    setupOptimizations() {
+        // Performance optimization flags
+        this.quality = 'high';
+        this.lastRenderTime = 0;
+        this.frameInterval = 1000 / 30; // Target 30 FPS
+        this.renderQueued = false;
+
+        // Create render buffer
+        this.renderBuffer = {
+            keypoints: new Map(),
+            connections: new Map(),
+            angles: new Map()
+        };
+    }
+
+    setupEventListeners() {
+        // Handle quality adjustments based on performance
+        window.addEventListener('memory-pressure', () => {
+            this.reduceQuality();
+        });
+
+        // Handle visibility changes
+        document.addEventListener('visibilitychange', () => {
+            if (document.hidden) {
+                this.pause();
+            } else {
+                this.resume();
             }
         });
-        
-        ctx.fill();
-        ctx.restore();
     }
 
-    drawSkeleton(pose) {
+    drawPose(pose, angles = null) {
         if (!pose || !pose.keypoints) return;
-        
-        const ctx = this.ctx;
-        ctx.strokeStyle = this.colors.skeleton;
-        ctx.lineWidth = this.lineWidth;
-        
-        // MediaPipe POSE_CONNECTIONS will be used directly from the library
-        pose.keypoints.forEach((keypoint, index) => {
-            const nextKeypoint = pose.keypoints[index + 1];
-            if (nextKeypoint && keypoint.score > 0.3 && nextKeypoint.score > 0.3) {
-                ctx.beginPath();
-                ctx.moveTo(keypoint.x * ctx.canvas.width, keypoint.y * ctx.canvas.height);
-                ctx.lineTo(nextKeypoint.x * ctx.canvas.width, nextKeypoint.y * ctx.canvas.height);
-                ctx.stroke();
+
+        const now = performance.now();
+        if (now - this.lastRenderTime < this.frameInterval) {
+            // Queue render if we're trying to render too frequently
+            if (!this.renderQueued) {
+                this.renderQueued = true;
+                setTimeout(() => {
+                    this.renderQueued = false;
+                    this.drawPose(pose, angles);
+                }, this.frameInterval);
             }
-        });
-    }
-
-    drawAngles(pose, angles) {
-        if (!pose || !angles) return;
-
-        const ctx = this.ctx;
-        const canvasWidth = ctx.canvas.width;
-        const canvasHeight = ctx.canvas.height;
-
-        ctx.save();
-        ctx.font = this.textSettings.font;
-        ctx.fillStyle = this.colors.text;
-        ctx.textAlign = this.textSettings.align;
-        ctx.textBaseline = this.textSettings.baseline;
-
-        // MediaPipe pose landmarks are indexed 0-32
-        // Draw angles at specific landmarks
-        const anglePoints = {
-            rightElbow: 14,  // Right elbow
-            leftElbow: 13,   // Left elbow
-            rightKnee: 26,   // Right knee
-            leftKnee: 25     // Left knee
-        };
-
-        for (const [angleName, landmarkIndex] of Object.entries(anglePoints)) {
-            if (pose.poseLandmarks && pose.poseLandmarks[landmarkIndex] && angles[angleName]) {
-                const x = pose.poseLandmarks[landmarkIndex].x * canvasWidth;
-                const y = pose.poseLandmarks[landmarkIndex].y * canvasHeight;
-                
-                ctx.fillText(
-                    `${Math.round(angles[angleName])}°`,
-                    x + (angleName.includes('right') ? 10 : -40),
-                    y
-                );
-            }
+            return;
         }
+        this.lastRenderTime = now;
 
+        // Clear and prepare for drawing
+        this.clear();
+        this.updateRenderBuffer(pose, angles);
+        
+        // Draw to offscreen canvas first
+        this.drawToOffscreen();
+        
+        // Copy to main canvas
+        this.ctx.drawImage(this.offscreenCanvas, 0, 0);
+    }
+
+    updateRenderBuffer(pose, angles) {
+        // Update keypoints
+        pose.keypoints.forEach((keypoint, index) => {
+            if (keypoint.score > 0.3) {
+                this.renderBuffer.keypoints.set(index, {
+                    x: keypoint.x * this.canvas.width,
+                    y: keypoint.y * this.canvas.height,
+                    score: keypoint.score
+                });
+            } else {
+                this.renderBuffer.keypoints.delete(index);
+            }
+        });
+
+        // Update connections
+        this.connectionPaths.forEach(connection => {
+            const start = this.renderBuffer.keypoints.get(connection.start);
+            const end = this.renderBuffer.keypoints.get(connection.end);
+            if (start && end) {
+                connection.path = new Path2D();
+                connection.path.moveTo(start.x, start.y);
+                connection.path.lineTo(end.x, end.y);
+            }
+        });
+
+        // Update angles if provided
+        if (angles) {
+            Object.entries(angles).forEach(([joint, angle]) => {
+                if (angle !== null) {
+                    this.renderBuffer.angles.set(joint, angle);
+                }
+            });
+        }
+    }
+
+    drawToOffscreen() {
+        const ctx = this.offscreenCtx;
+        
+        // Draw connections first
+        ctx.lineWidth = this.styles.connections.width;
+        this.connectionPaths.forEach(connection => {
+            if (connection.path) {
+                ctx.strokeStyle = this.styles.connections.colors.default;
+                ctx.stroke(connection.path);
+            }
+        });
+
+        // Draw keypoints
+        this.renderBuffer.keypoints.forEach((point, index) => {
+            ctx.beginPath();
+            ctx.arc(point.x, point.y, this.styles.keypoints.radius, 0, 2 * Math.PI);
+            ctx.fillStyle = point.score > 0.5 ? 
+                this.styles.keypoints.colors.default : 
+                this.styles.keypoints.colors.inactive;
+            ctx.fill();
+        });
+
+        // Draw angles
+        if (this.quality !== 'low') {
+            this.renderBuffer.angles.forEach((angle, joint) => {
+                this.drawAngle(ctx, joint, angle);
+            });
+        }
+    }
+
+    drawAngle(ctx, joint, angle) {
+        const keypoint = this.renderBuffer.keypoints.get(this.getJointKeypoint(joint));
+        if (!keypoint) return;
+
+        ctx.save();
+        ctx.font = this.styles.text.font;
+        ctx.fillStyle = this.styles.text.color;
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+
+        const text = `${Math.round(angle)}°`;
+        const metrics = ctx.measureText(text);
+        const padding = this.styles.text.padding;
+
+        // Draw background
+        ctx.fillStyle = this.styles.text.background;
+        ctx.fillRect(
+            keypoint.x - metrics.width/2 - padding,
+            keypoint.y - metrics.actualBoundingBoxAscent/2 - padding,
+            metrics.width + padding*2,
+            metrics.actualBoundingBoxAscent + padding*2
+        );
+
+        // Draw text
+        ctx.fillStyle = this.styles.text.color;
+        ctx.fillText(text, keypoint.x, keypoint.y);
         ctx.restore();
     }
 
-    drawFaceOrientation(pose) {
-        if (!pose || !pose.keypoints3D) return;
-        
-        const ctx = this.ctx;
-        const canvasWidth = ctx.canvas.width;
-        const canvasHeight = ctx.canvas.height;
+    getJointKeypoint(joint) {
+        const jointMap = {
+            'rightElbow': 14,
+            'leftElbow': 13,
+            'rightKnee': 26,
+            'leftKnee': 25
+        };
+        return jointMap[joint];
+    }
 
-        const nose = pose.keypoints3D.find(kp => kp.name === 'nose');
-        const leftEye = pose.keypoints3D.find(kp => kp.name === 'left_eye');
-        const rightEye = pose.keypoints3D.find(kp => kp.name === 'right_eye');
-
-        if (nose && leftEye && rightEye) {
-            const scale = 50; // Scale factor for visualization
-
-            // Draw direction vector from nose
-            ctx.beginPath();
-            ctx.moveTo(nose.x * canvasWidth, nose.y * canvasHeight);
-            ctx.lineTo(nose.x * canvasWidth + nose.z * scale, nose.y * canvasHeight);
-            ctx.strokeStyle = '#ff0000';
-            ctx.lineWidth = 2;
-            ctx.stroke();
+    reduceQuality() {
+        if (this.quality === 'high') {
+            this.quality = 'medium';
+            this.frameInterval = 1000 / 24; // Reduce to 24 FPS
+        } else if (this.quality === 'medium') {
+            this.quality = 'low';
+            this.frameInterval = 1000 / 15; // Reduce to 15 FPS
         }
     }
 
     clear() {
-        this.ctx.clearRect(0, 0, this.ctx.canvas.width, this.ctx.canvas.height);
+        this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+        this.offscreenCtx.clearRect(0, 0, this.offscreenCanvas.width, this.offscreenCanvas.height);
+    }
+
+    pause() {
+        this.renderQueued = false;
+    }
+
+    resume() {
+        this.lastRenderTime = 0;
     }
 } 

@@ -1,5 +1,6 @@
 class MovementAnalysisApp {
     constructor() {
+        console.log('Creating MovementAnalysisApp instance');
         // Set canvas size immediately
         this.canvas = document.getElementById('output');
         this.canvas.width = 640;
@@ -32,66 +33,49 @@ class MovementAnalysisApp {
         this.video.onplaying = () => {
             console.log('Video is actually playing');
         };
+
+        this.components = new Map();
+        this.initialized = false;
     }
 
     async initialize() {
         try {
-            console.log('Waiting for Three.js...');
-            await waitForThree();
-            console.log('Three.js loaded successfully');
-
-            // Check dependencies
-            if (!window.THREE) {
-                throw new Error('THREE.js not loaded');
-            }
-            if (!window.PoseVisualizer3D) {
-                throw new Error('PoseVisualizer3D not loaded');
-            }
-            if (!window.MovementAnalyzer) {
-                throw new Error('MovementAnalyzer not loaded');
-            }
-
-            console.log('All dependencies loaded');
-
-            // Get DOM elements
-            const video = document.getElementById('video');
-            const canvas = document.getElementById('output');
-            
-            if (!video || !canvas) {
-                throw new Error('Required video or canvas element not found');
-            }
-
-            // Initialize pose detection
-            console.log('Initializing MediaPipePose...');
-            window.poseDetector = new MediaPipePose(video, canvas);
-            console.log('MediaPipePose initialized');
-            
-            await window.poseDetector.start();
-            console.log('Pose detection started');
-
-            // Show loading indicator until detector is ready
-            document.getElementById('loading').style.display = 'flex';
-            console.log('4. Starting detector initialization');
-            const initialized = await this.detector.initialize();
-            console.log('5. Detector initialized:', initialized);
-            document.getElementById('loading').style.display = 'none';
-
-            if (!initialized) {
-                throw new Error('Failed to initialize detector');
-            }
-
-            // Set up loop timing variables
-            this.isRunning = true;
-            this.lastFrameTime = performance.now();
-            this.targetFrameInterval = 1000 / 30; // ~30 FPS
-
-            console.log('6. Starting detection loop');
-            this.detectAndDraw();
-            return true;
+            await this.initializeComponents();
+            this.setupEventListeners();
+            this.initialized = true;
+            console.log('Movement Analysis App initialized successfully');
         } catch (error) {
-            console.error('Initialization error:', error);
-            return false;
+            throw new ApplicationError('Failed to initialize app', 'INITIALIZATION_FAILED', false);
         }
+    }
+
+    async initializeComponents() {
+        // Initialize in correct order
+        const mediaPipePose = new MediaPipePose(
+            document.getElementById('video'),
+            document.getElementById('output')
+        );
+        const exerciseDetector = new ExerciseDetector();
+        const feedbackSystem = new FeedbackSystem();
+
+        // Store components for cleanup
+        this.components.set('pose', mediaPipePose);
+        this.components.set('detector', exerciseDetector);
+        this.components.set('feedback', feedbackSystem);
+
+        // Start camera
+        await mediaPipePose.start();
+    }
+
+    dispose() {
+        // Cleanup all components
+        for (const [name, component] of this.components) {
+            if (component && typeof component.dispose === 'function') {
+                component.dispose();
+            }
+        }
+        this.components.clear();
+        this.initialized = false;
     }
 
     async detectAndDraw() {
