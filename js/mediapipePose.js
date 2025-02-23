@@ -7,12 +7,19 @@ class MediaPipePose {
 
     // Initialize 3D visualizer after ensuring the class is loaded
     try {
-      this.visualizer3D = new PoseVisualizer3D(
-        document.querySelector('.video-container')
-      );
+      if (typeof PoseVisualizer3D === 'undefined') {
+        throw new Error('PoseVisualizer3D class not loaded');
+      }
+      const container = document.querySelector('.video-container');
+      if (!container) {
+        throw new Error('Video container not found');
+      }
+      this.visualizer3D = new PoseVisualizer3D(container);
       console.log('3D visualizer initialized');
     } catch (error) {
       console.error('Failed to initialize 3D visualizer:', error);
+      // Continue without 3D visualization
+      this.visualizer3D = null;
     }
 
     // Initialize the MediaPipe Pose instance

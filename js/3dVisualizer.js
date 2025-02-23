@@ -1,42 +1,62 @@
 class PoseVisualizer3D {
     constructor(container) {
+        // Check if Three.js is loaded
+        if (typeof THREE === 'undefined') {
+            throw new Error('Three.js is not loaded');
+        }
+        if (typeof THREE.OrbitControls === 'undefined') {
+            console.warn('OrbitControls not loaded, skipping controls');
+        }
         this.container = container;
         this.init();
     }
 
     init() {
-        // Set up Three.js scene
-        this.scene = new THREE.Scene();
-        this.camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
-        this.renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
-        
-        // Set renderer size and add to container
-        this.renderer.setSize(640, 480);
-        this.container.appendChild(this.renderer.domElement);
+        try {
+            // Set up Three.js scene
+            this.scene = new THREE.Scene();
+            this.camera = new THREE.PerspectiveCamera(75, 640/480, 0.1, 1000);
+            this.renderer = new THREE.WebGLRenderer({ 
+                antialias: true, 
+                alpha: true,
+                canvas: document.createElement('canvas')
+            });
+            
+            // Set renderer size and add to container
+            this.renderer.setSize(640, 480);
+            this.container.appendChild(this.renderer.domElement);
 
-        // Add lights
-        const ambientLight = new THREE.AmbientLight(0x404040);
-        const directionalLight = new THREE.DirectionalLight(0xffffff, 1);
-        this.scene.add(ambientLight);
-        this.scene.add(directionalLight);
+            // Add lights with more intensity
+            const ambientLight = new THREE.AmbientLight(0x404040, 2);
+            const directionalLight = new THREE.DirectionalLight(0xffffff, 2);
+            directionalLight.position.set(0, 1, 2);
+            this.scene.add(ambientLight);
+            this.scene.add(directionalLight);
 
-        // Initialize body parts
-        this.initializeBodyParts();
+            // Initialize body parts
+            this.initializeBodyParts();
 
-        // Update camera position for better viewing angle
-        this.camera.position.set(0, 0, 3);
-        this.camera.lookAt(0, 0, 0);
+            // Update camera position for better viewing angle
+            this.camera.position.set(0, 1, 3);
+            this.camera.lookAt(0, 0, 0);
 
-        // Add orbit controls for testing
-        this.controls = new THREE.OrbitControls(this.camera, this.renderer.domElement);
-        this.controls.enableDamping = true;
-        this.controls.dampingFactor = 0.05;
+            // Add orbit controls if available
+            if (typeof THREE.OrbitControls !== 'undefined') {
+                this.controls = new THREE.OrbitControls(this.camera, this.renderer.domElement);
+                this.controls.enableDamping = true;
+                this.controls.dampingFactor = 0.05;
+            }
 
-        // Make renderer background transparent
-        this.renderer.setClearColor(0x000000, 0);
+            // Make renderer background transparent
+            this.renderer.setClearColor(0x000000, 0);
 
-        // Start animation
-        this.animate();
+            // Start animation
+            this.animate();
+            
+            console.log('3D visualization initialized successfully');
+        } catch (error) {
+            console.error('Failed to initialize 3D visualization:', error);
+        }
     }
 
     initializeBodyParts() {

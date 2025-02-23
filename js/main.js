@@ -126,10 +126,17 @@ class MovementAnalysisApp {
 // Start the application when the page loads
 window.onload = async () => {
     try {
+        console.log('Starting initialization...');
+        
+        // Check if required classes are loaded
+        console.log('Checking dependencies...');
+        console.log('THREE.js loaded:', typeof THREE !== 'undefined');
+        console.log('PoseVisualizer3D loaded:', typeof PoseVisualizer3D !== 'undefined');
+        console.log('MovementAnalyzer loaded:', typeof MovementAnalyzer !== 'undefined');
+        
         const video = document.getElementById('video');
         const canvas = document.getElementById('output');
         
-        // Ensure elements exist
         if (!video || !canvas) {
             throw new Error('Required video or canvas element not found');
         }
