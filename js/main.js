@@ -52,7 +52,7 @@ class MovementAnalysisApp {
                 this.video.onloadedmetadata = async () => {
                     try {
                         console.log('3. Video metadata loaded');
-                        this.video.play();
+                        await this.video.play();
                         console.log('4. Video playing');
                         
                         document.getElementById('loading').style.display = 'flex';
@@ -72,7 +72,12 @@ class MovementAnalysisApp {
                         reject(error);
                     }
                 };
-                setTimeout(() => reject(new Error('Video metadata load timeout')), 10000);
+                // Clear timeout on success
+                const timeoutId = setTimeout(() => reject(new Error('Video metadata load timeout')), 10000);
+                this.video.onloadedmetadata = () => {
+                    clearTimeout(timeoutId);
+                    // ... rest of the code
+                };
             });
         } catch (error) {
             console.error('Initialization error:', error);

@@ -43,7 +43,7 @@ class PoseDetector {
             
             const model = poseDetection.SupportedModels.MoveNet;
             const detectorConfig = {
-                modelType: poseDetection.movenet.modelType.SINGLEPOSE_LIGHTNING,
+                modelType: 'SinglePose.Lightning',
                 enableSmoothing: true,
                 scoreThreshold: 0.3,
                 maxPoses: 1
