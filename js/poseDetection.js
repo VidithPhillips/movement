@@ -41,12 +41,12 @@ class PoseDetector {
             await tf.ready();
             console.log('TensorFlow backend ready:', tf.getBackend());
             
-            // Use correct model initialization
-            const model = 'MoveNet';
+            const model = poseDetection.SupportedModels.MoveNet;
             const detectorConfig = {
-                modelType: 'lightning',
+                modelType: poseDetection.movenet.modelType.SINGLEPOSE_LIGHTNING,
                 enableSmoothing: true,
-                scoreThreshold: 0.3
+                scoreThreshold: 0.3,
+                maxPoses: 1
             };
 
             console.log('Creating detector with config:', detectorConfig);

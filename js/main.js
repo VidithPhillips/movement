@@ -48,27 +48,31 @@ class MovementAnalysisApp {
             console.log('2. Camera access granted');
             this.video.srcObject = stream;
             
-            return new Promise(async resolve => {
+            return new Promise((resolve, reject) => {
                 this.video.onloadedmetadata = async () => {
-                    console.log('3. Video metadata loaded');
-                    this.video.play();
-                    console.log('4. Video playing');
-                    
-                    // Initialize detector immediately
-                    document.getElementById('loading').style.display = 'flex';
-                    console.log('5. Starting detector initialization');
-                    const initialized = await this.detector.initialize();
-                    console.log('6. Detector initialized:', initialized);
-                    document.getElementById('loading').style.display = 'none';
-                    
-                    if (initialized) {
-                        console.log('7. Starting detection loop');
-                        this.detectAndDraw();
-                    } else {
-                        console.error('Failed to initialize detector');
+                    try {
+                        console.log('3. Video metadata loaded');
+                        this.video.play();
+                        console.log('4. Video playing');
+                        
+                        document.getElementById('loading').style.display = 'flex';
+                        console.log('5. Starting detector initialization');
+                        const initialized = await this.detector.initialize();
+                        console.log('6. Detector initialized:', initialized);
+                        document.getElementById('loading').style.display = 'none';
+                        
+                        if (initialized) {
+                            console.log('7. Starting detection loop');
+                            this.detectAndDraw();
+                            resolve(true);
+                        } else {
+                            reject(new Error('Failed to initialize detector'));
+                        }
+                    } catch (error) {
+                        reject(error);
                     }
-                    resolve(initialized);
                 };
+                setTimeout(() => reject(new Error('Video metadata load timeout')), 10000);
             });
         } catch (error) {
             console.error('Initialization error:', error);
