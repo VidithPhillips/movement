@@ -23,31 +23,58 @@ class PoseVisualizer3D {
         // Initialize body parts
         this.initializeBodyParts();
 
-        // Position camera
-        this.camera.position.z = 2;
+        // Update camera position for better viewing angle
+        this.camera.position.set(0, 0, 3);
+        this.camera.lookAt(0, 0, 0);
+
+        // Add orbit controls for testing
+        this.controls = new THREE.OrbitControls(this.camera, this.renderer.domElement);
+        this.controls.enableDamping = true;
+        this.controls.dampingFactor = 0.05;
+
+        // Make renderer background transparent
+        this.renderer.setClearColor(0x000000, 0);
 
         // Start animation
         this.animate();
     }
 
     initializeBodyParts() {
-        // Create geometries for body parts
+        // Create geometries for body parts with better materials
+        const humanMaterial = new THREE.MeshPhongMaterial({
+            color: 0x2194ce,
+            transparent: true,
+            opacity: 0.8,
+            shininess: 30,
+            specular: 0x666666
+        });
+
         this.bodyParts = {
-            torso: this.createBodyPart(0.3, 0.5, 0.2),
-            head: this.createBodyPart(0.15, 0.15, 0.15, true),
-            leftArm: this.createLimb(0.1, 0.3),
-            rightArm: this.createLimb(0.1, 0.3),
-            leftLeg: this.createLimb(0.12, 0.4),
-            rightLeg: this.createLimb(0.12, 0.4)
+            torso: this.createBodyPart(0.3, 0.5, 0.2, false, humanMaterial),
+            head: this.createBodyPart(0.15, 0.15, 0.15, true, humanMaterial),
+            leftArm: this.createLimb(0.1, 0.3, humanMaterial),
+            rightArm: this.createLimb(0.1, 0.3, humanMaterial),
+            leftLeg: this.createLimb(0.12, 0.4, humanMaterial),
+            rightLeg: this.createLimb(0.12, 0.4, humanMaterial),
+            // Add joints as spheres
+            joints: this.createJoints(humanMaterial)
         };
 
-        // Add all parts to scene
+        // Add shadow casting
         Object.values(this.bodyParts).forEach(part => {
-            this.scene.add(part);
+            if (Array.isArray(part)) {
+                part.forEach(joint => {
+                    joint.castShadow = true;
+                    this.scene.add(joint);
+                });
+            } else {
+                part.castShadow = true;
+                this.scene.add(part);
+            }
         });
     }
 
-    createBodyPart(width, height, depth, isSphere = false) {
+    createBodyPart(width, height, depth, isSphere = false, material) {
         let geometry, material;
         
         if (isSphere) {
@@ -65,7 +92,7 @@ class PoseVisualizer3D {
         return new THREE.Mesh(geometry, material);
     }
 
-    createLimb(width, height) {
+    createLimb(width, height, material) {
         const geometry = new THREE.CylinderGeometry(width/2, width/2, height);
         const material = new THREE.MeshPhongMaterial({
             color: 0x00ff00,
@@ -73,6 +100,19 @@ class PoseVisualizer3D {
             opacity: 0.8
         });
         return new THREE.Mesh(geometry, material);
+    }
+
+    createJoints(material) {
+        const joints = [];
+        const jointRadius = 0.05;
+        for (let i = 0; i < 33; i++) { // MediaPipe has 33 landmarks
+            const joint = new THREE.Mesh(
+                new THREE.SphereGeometry(jointRadius),
+                material.clone()
+            );
+            joints.push(joint);
+        }
+        return joints;
     }
 
     updatePose(pose) {

@@ -218,4 +218,27 @@ body {
     width: 640px;
     height: 480px;
     background: #000;
+}
+
+.feedback-overlay {
+    position: absolute;
+    top: 20px;
+    left: 20px;
+    background: rgba(0, 0, 0, 0.7);
+    padding: 10px;
+    border-radius: 5px;
+    color: white;
+    z-index: 100;
+}
+
+.warning {
+    color: #ff9800;
+}
+
+.error {
+    color: #f44336;
+}
+
+.success {
+    color: #4caf50;
 } 
