@@ -5,6 +5,11 @@ class MediaPipePose {
     this.ctx = canvas.getContext('2d');
     this.isRunning = false;
 
+    // Initialize 3D visualizer
+    this.visualizer3D = new PoseVisualizer3D(
+      document.querySelector('.video-container')
+    );
+
     // Initialize the MediaPipe Pose instance
     this.pose = new Pose({
       locateFile: (file) => {
@@ -109,6 +114,9 @@ class MediaPipePose {
           }))
         });
       }
+
+      // Update 3D visualization
+      this.visualizer3D.updatePose(results);
     }
   }
 

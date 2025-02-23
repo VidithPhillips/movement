@@ -64,25 +64,59 @@ class MovementAnalyzer {
 
     calculateJointAngles(pose) {
         const angles = {};
+        // MediaPipe provides results.poseLandmarks
         const landmarks = pose.poseLandmarks;
         
         if (!landmarks) return angles;
 
-        // Calculate right arm angle
+        // Calculate arm angles
         angles.rightElbow = this.calculateAngle(
             landmarks[this.landmarks.rightShoulder],
             landmarks[this.landmarks.rightElbow],
             landmarks[this.landmarks.rightWrist]
         );
-
-        // Calculate left arm angle
         angles.leftElbow = this.calculateAngle(
             landmarks[this.landmarks.leftShoulder],
             landmarks[this.landmarks.leftElbow],
             landmarks[this.landmarks.leftWrist]
         );
 
-        // Add other angle calculations as needed
+        // Calculate shoulder angles
+        angles.rightShoulder = this.calculateAngle(
+            landmarks[this.landmarks.rightHip],
+            landmarks[this.landmarks.rightShoulder],
+            landmarks[this.landmarks.rightElbow]
+        );
+        angles.leftShoulder = this.calculateAngle(
+            landmarks[this.landmarks.leftHip],
+            landmarks[this.landmarks.leftShoulder],
+            landmarks[this.landmarks.leftElbow]
+        );
+
+        // Calculate knee angles
+        angles.rightKnee = this.calculateAngle(
+            landmarks[this.landmarks.rightHip],
+            landmarks[this.landmarks.rightKnee],
+            landmarks[this.landmarks.rightAnkle]
+        );
+        angles.leftKnee = this.calculateAngle(
+            landmarks[this.landmarks.leftHip],
+            landmarks[this.landmarks.leftKnee],
+            landmarks[this.landmarks.leftAnkle]
+        );
+
+        // Calculate hip angles
+        angles.rightHip = this.calculateAngle(
+            landmarks[this.landmarks.rightShoulder],
+            landmarks[this.landmarks.rightHip],
+            landmarks[this.landmarks.rightKnee]
+        );
+        angles.leftHip = this.calculateAngle(
+            landmarks[this.landmarks.leftShoulder],
+            landmarks[this.landmarks.leftHip],
+            landmarks[this.landmarks.leftKnee]
+        );
+
         return angles;
     }
 
