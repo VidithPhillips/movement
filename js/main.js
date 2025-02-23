@@ -126,10 +126,14 @@ class MovementAnalysisApp {
         const now = performance.now();
         const timeSinceLastDetection = now - this.lastPoseDetectionTime;
 
-        // Throttle pose detection to maintain consistent frame rate
         let pose = this.detector.lastPose;
         if (timeSinceLastDetection >= this.detectionInterval) {
             pose = await this.detector.detectPose(this.video);
+            if (pose) {
+                console.log('Pose detected:', pose);
+            } else {
+                console.log('No pose detected this frame');
+            }
             this.lastPoseDetectionTime = now;
         }
         

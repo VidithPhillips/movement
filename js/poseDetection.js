@@ -20,15 +20,13 @@ class PoseDetector {
     async initialize() {
         try {
             console.log('Starting detector initialization...');
-            // Make sure all dependencies are loaded
-            await Promise.all([
-                tf.ready(),
-                new Promise(resolve => {
-                    if (window.poseDetection) resolve();
-                    else window.addEventListener('load', resolve);
-                })
-            ]);
-            console.log('Dependencies loaded');
+           
+            // First ensure TF backend is ready
+            if (!tf.getBackend()) {
+                await tf.setBackend('webgl');
+            }
+            await tf.ready();
+            console.log('TensorFlow backend ready:', tf.getBackend());
 
             const model = poseDetection.SupportedModels.BLAZEPOSE;
             const detectorConfig = {
@@ -37,9 +35,15 @@ class PoseDetector {
                 solutionPath: 'https://cdn.jsdelivr.net/npm/@mediapipe/pose',
                 modelType: 'full',
                 enableTracking: true,
-                refineLandmarks: true
+                refineLandmarks: true,
+                minDetectionConfidence: 0.3,
+                minTrackingConfidence: 0.3
             };
             
+            if (!window.poseDetection) {
+                throw new Error('Pose detection library not loaded');
+            }
+
             console.log('Creating detector with config:', detectorConfig);
             this.detector = await poseDetection.createDetector(model, detectorConfig);
             if (!this.detector) {
@@ -52,6 +56,9 @@ class PoseDetector {
         } catch (error) {
             console.error('Detector initialization error:', error.message);
             console.error('Full error:', error);
+            console.log('TF Backend status:', tf.getBackend());
+            console.log('MediaPipe status:', !!window.pose);
+            console.log('PoseDetection status:', !!window.poseDetection);
             alert('Failed to initialize pose detector. Please check console for details.');
             return false;
         }
