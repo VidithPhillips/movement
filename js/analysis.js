@@ -32,9 +32,9 @@ class MovementAnalyzer {
     }
 
     updateMetrics(pose, detector) {
-        if (!pose) return;
+        if (!pose || !pose.body) return;
         
-        const faceMetrics = detector.calculateFaceMetrics(pose);
+        const faceMetrics = detector.calculateFaceMetrics(pose.body);
         
         // Determine tracking mode based on eye distance (face size)
         // If eyeDistance is greater than a threshold, assume a close-up (head tracking)

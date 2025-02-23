@@ -45,11 +45,10 @@ class PoseVisualizer {
     }
 
     drawKeypoints(pose) {
-        if (!pose.keypoints) return;
+        if (!pose || !pose.keypoints) return;
         
         const ctx = this.ctx;
         ctx.fillStyle = this.colors.keypoints;
-        // Batch all keypoint drawing
         ctx.beginPath();
         pose.keypoints.forEach(keypoint => {
             if (keypoint.score > 0.3) {

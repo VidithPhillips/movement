@@ -30,34 +30,28 @@ class PoseDetector {
         try {
             console.log('Starting detector initialization...');
             
-            if (!window.tf) {
+            if (!window.Human) {
                 throw new Error('TensorFlow.js not loaded');
-            }
-            if (!window.poseDetection) {
-                throw new Error('Pose-detection library not loaded');
             }
             
             await tf.setBackend('webgl');
             await tf.ready();
             console.log('TensorFlow backend ready:', tf.getBackend());
             
-            // Use MoveNet model with correct configuration
-            const model = poseDetection.SupportedModels.MoveNet;
-            const detectorConfig = {
-                modelType: poseDetection.movenet.modelType.SINGLEPOSE_LIGHTNING,
-                enableSmoothing: true,
-                scoreThreshold: 0.3
-            };
-
-            console.log('Creating detector with config:', detectorConfig);
-            console.log('Model:', model);
-            console.log('Config:', detectorConfig);
-            this.detector = await poseDetection.createDetector(model, detectorConfig);
+            // Initialize Human library with YOLOv8
+            this.detector = new Human.Human({
+                modelPath: 'https://cdn.jsdelivr.net/npm/@vladmandic/human/models',
+                filter: { enabled: true },
+                body: {
+                    enabled: true,
+                    modelPath: 'yolov8-pose.json',
+                    maxDetections: 1,
+                    minConfidence: 0.3
+                }
+            });
+            await this.detector.load();
             
-            if (!this.detector) {
-                throw new Error('Failed to create detector');
-            }
-            
+            console.log('Detector initialized');
             this.isInitialized = true;
             return true;
         } catch (error) {
@@ -76,24 +70,23 @@ class PoseDetector {
                 return null;
             }
 
-            const poses = await this.detector.estimatePoses(video, {
-                flipHorizontal: true,
-                maxPoses: 1,
-                scoreThreshold: 0.3,
-                staticImageMode: false,
-                enableSmoothing: true
-            });
-
-            if (poses.length > 0) {
-                const pose = poses[0];
-                // Validate pose data
-                if (!pose.keypoints || pose.keypoints.length === 0) {
-                    console.warn('Invalid pose data');
-                    return null;
-                }
-                this.lastPose = pose;
-                return pose;
+            // Use Human library's detect method
+            const result = await this.detector.detect(video);
+            
+            // Convert Human format to our format
+            if (result.body && result.body.length > 0) {
+                const humanPose = result.body[0];
+                return {
+                    keypoints: humanPose.keypoints.map(kp => ({
+                        x: kp.x,
+                        y: kp.y,
+                        score: kp.score,
+                        name: kp.part
+                    })),
+                    score: humanPose.score
+                };
             }
+            
             return null;
         } catch (error) {
             console.warn('Pose detection error:', error);

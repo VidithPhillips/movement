@@ -87,9 +87,6 @@ class MovementAnalysisApp {
 
     async detectAndDraw() {
         console.log('8. In detectAndDraw');
-        const now = performance.now();
-        
-        // Clear canvas before drawing
         this.visualizer.clear();
         
         try {
@@ -102,7 +99,6 @@ class MovementAnalysisApp {
                 this.visualizer.drawKeypoints(pose);
                 const angles = this.detector.calculateJointAngles(pose);
                 this.visualizer.drawAngles(pose, angles);
-                // Update metrics
                 this.analyzer.updateMetrics(pose, this.detector);
             }
         } catch (error) {
