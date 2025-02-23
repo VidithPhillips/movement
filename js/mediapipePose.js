@@ -5,10 +5,15 @@ class MediaPipePose {
     this.ctx = canvas.getContext('2d');
     this.isRunning = false;
 
-    // Initialize 3D visualizer
-    this.visualizer3D = new PoseVisualizer3D(
-      document.querySelector('.video-container')
-    );
+    // Initialize 3D visualizer after ensuring the class is loaded
+    try {
+      this.visualizer3D = new PoseVisualizer3D(
+        document.querySelector('.video-container')
+      );
+      console.log('3D visualizer initialized');
+    } catch (error) {
+      console.error('Failed to initialize 3D visualizer:', error);
+    }
 
     // Initialize the MediaPipe Pose instance
     this.pose = new Pose({
@@ -88,28 +93,31 @@ class MediaPipePose {
     // Draw video frame
     this.ctx.drawImage(results.image, 0, 0, this.canvas.width, this.canvas.height);
     
-    // Draw pose if detected
     if (results.poseLandmarks) {
-      // Draw pose connections
-      drawConnectors(this.ctx, results.poseLandmarks, POSE_CONNECTIONS, {
-        color: '#00FF00',
-        lineWidth: 4
-      });
-      
-      // Draw landmarks
-      drawLandmarks(this.ctx, results.poseLandmarks, {
-        color: '#FF0000',
-        lineWidth: 2
-      });
+        console.log("Pose detected:", results.poseLandmarks); // Debug log
 
-      // Update metrics
-      const analyzer = new MovementAnalyzer();
-      analyzer.updateMetrics({
-        poseLandmarks: results.poseLandmarks
-      });
+        // Draw pose using MediaPipe's built-in utilities
+        drawConnectors(this.ctx, results.poseLandmarks, POSE_CONNECTIONS, {
+            color: '#00FF00',
+            lineWidth: 2
+        });
+        drawLandmarks(this.ctx, results.poseLandmarks, {
+            color: '#FF0000',
+            lineWidth: 1
+        });
 
-      // Update 3D visualization
-      this.visualizer3D.updatePose(results);
+        // Update metrics using MediaPipe's format
+        if (!this.analyzer) {
+            this.analyzer = new MovementAnalyzer();
+        }
+        
+        // Pass the entire results object to the analyzer
+        this.analyzer.updateMetrics(results);
+
+        // Update 3D visualization
+        if (this.visualizer3D) {
+            this.visualizer3D.updatePose(results);
+        }
     }
   }
 
