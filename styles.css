@@ -2,7 +2,7 @@ body {
     margin: 0;
     padding: 0;
     font-family: Arial, sans-serif;
-    background-color: #1a1a1a;
+    background-color: #121212;
     color: #ffffff;
 }
 
@@ -10,6 +10,9 @@ body {
     max-width: 1600px;
     margin: 0 auto;
     padding: 1rem;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
 }
 
 .main-content {
@@ -23,9 +26,10 @@ body {
     position: relative;
     width: 640px;
     height: 480px;
-    background: #2d2d2d;
+    background: #000000;
     border-radius: 10px;
     overflow: hidden;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.5);
 }
 
 #output {
@@ -34,44 +38,6 @@ body {
     height: 100%;
     image-rendering: optimizeSpeed;
     transform: translate3d(0,0,0);
-}
-
-.controls {
-    position: absolute;
-    bottom: 20px;
-    left: 50%;
-    transform: translateX(-50%);
-    display: flex;
-    gap: 10px;
-    z-index: 10;
-}
-
-.primary-btn, .secondary-btn {
-    padding: 10px 20px;
-    border: none;
-    border-radius: 5px;
-    color: white;
-    cursor: pointer;
-    font-weight: bold;
-    transition: all 0.3s ease;
-}
-
-.primary-btn {
-    background: #2196F3;
-}
-
-.primary-btn:hover {
-    background: #1976D2;
-    transform: translateY(-1px);
-}
-
-.secondary-btn {
-    background: #424242;
-}
-
-.secondary-btn:hover {
-    background: #616161;
-    transform: translateY(-1px);
 }
 
 .metrics-panel {
@@ -87,10 +53,16 @@ body {
 }
 
 .metric-box {
-    background: #2d2d2d;
+    background: rgba(45, 45, 45, 0.8);
     padding: 20px;
     border-radius: 10px;
+    backdrop-filter: blur(10px);
     will-change: transform;
+    transition: transform 0.2s ease;
+}
+
+.metric-box:hover {
+    transform: translateY(-2px);
 }
 
 .metric-box h3 {
@@ -112,17 +84,20 @@ body {
 }
 
 .metric-value {
-    background: #424242;
+    background: rgba(66, 66, 66, 0.6);
     padding: 10px;
     border-radius: 5px;
+    border: 1px solid rgba(255,255,255,0.1);
     text-align: center;
     display: flex;
     flex-direction: column;
     gap: 8px;
+    transition: all 0.2s ease;
 }
 
 .metric-value:hover {
-    background: #616161;
+    background: rgba(97, 97, 97, 0.8);
+    border-color: rgba(255,255,255,0.2);
 }
 
 .metric-label {
@@ -133,8 +108,9 @@ body {
 
 .metric-number {
     font-size: 1.2em;
-    color: #64B5F6;
+    color: #81D4FA;
     margin-top: 5px;
+    font-weight: 500;
 }
 
 .loading-overlay {
@@ -143,7 +119,7 @@ body {
     left: 0;
     right: 0;
     bottom: 0;
-    background: rgba(0,0,0,0.7);
+    background: rgba(0,0,0,0.85);
     display: flex;
     flex-direction: column;
     align-items: center;
@@ -151,13 +127,14 @@ body {
     color: white;
     z-index: 100;
     will-change: opacity;
+    backdrop-filter: blur(5px);
 }
 
 .loading-spinner {
     width: 50px;
     height: 50px;
-    border: 3px solid #f3f3f3;
-    border-top: 3px solid #2196F3;
+    border: 3px solid rgba(255,255,255,0.2);
+    border-top: 3px solid #81D4FA;
     border-radius: 50%;
     animation: spin 1s linear infinite;
     margin-bottom: 10px;
@@ -174,16 +151,18 @@ body {
     font-size: 0.9em;
     padding: 2px 6px;
     border-radius: 4px;
+    font-weight: 500;
+    letter-spacing: 0.5px;
 }
 
 .change-indicator.positive {
-    color: #4caf50;
-    background: rgba(76, 175, 80, 0.1);
+    color: #69F0AE;
+    background: rgba(105, 240, 174, 0.15);
 }
 
 .change-indicator.negative {
-    color: #f44336;
-    background: rgba(244, 67, 54, 0.1);
+    color: #FF8A80;
+    background: rgba(255, 138, 128, 0.15);
 }
 
 .change-indicator.neutral {
@@ -213,4 +192,10 @@ body {
     font-size: 1.1em;
     background: rgba(255,0,0,0.1);
     border-radius: 5px;
+}
+
+* {
+    transition: background-color 0.2s ease,
+               transform 0.2s ease,
+               border-color 0.2s ease;
 } 

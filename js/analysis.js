@@ -55,6 +55,8 @@ class MovementAnalyzer {
 
         // Always update head & face metrics in both modes
         this.updateHeadFaceDOM(faceMetrics);
+
+        this.mode = mode; // Store mode for other components to use
     }
 
     updateBodyAnglesDOM(angles) {

@@ -30,27 +30,37 @@ class PoseDetector {
         try {
             console.log('Starting detector initialization...');
             
+            if (typeof tf === 'undefined') {
+                throw new Error('TensorFlow.js not loaded');
+            }
+            if (typeof poseDetection === 'undefined') {
+                throw new Error('Pose-detection library not loaded');
+            }
+            
             await tf.setBackend('webgl');
             await tf.ready();
+            console.log('TensorFlow backend ready:', tf.getBackend());
             
-            // Simplified configuration like iris-track
-            const model = poseDetection.SupportedModels.BLAZEPOSE;
+            const model = poseDetection.SupportedModels.MOVENET;
             const detectorConfig = {
-                runtime: 'mediapipe',
-                modelType: 'lite',
+                modelType: poseDetection.movenet.modelType.SINGLEPOSE_LIGHTNING,
                 enableSmoothing: true,
-                minDetectionConfidence: 0.3,
-                minTrackingConfidence: 0.3
+                scoreThreshold: 0.2,
+                modelUrl: 'https://tfhub.dev/google/movenet/singlepose/lightning/4'
             };
 
             console.log('Creating detector with config:', detectorConfig);
             this.detector = await poseDetection.createDetector(model, detectorConfig);
             
+            if (!this.detector) {
+                throw new Error('Failed to create detector');
+            }
+            
             this.isInitialized = true;
-            console.log('Detector initialized successfully');
             return true;
         } catch (error) {
             console.error('Detector initialization error:', error);
+            console.error('Stack:', error.stack);
             return false;
         }
     }
@@ -59,6 +69,10 @@ class PoseDetector {
         if (!this.detector || !this.isInitialized) return null;
         
         try {
+            if (!video.videoWidth || !video.videoHeight) {
+                console.warn('Video not ready');
+                return null;
+            }
             const poses = await this.detector.estimatePoses(video, {
                 flipHorizontal: true,
                 maxPoses: 1,

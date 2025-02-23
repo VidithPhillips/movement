@@ -1,5 +1,10 @@
 class MovementAnalysisApp {
     constructor() {
+        // Set canvas size immediately
+        this.canvas = document.getElementById('output');
+        this.canvas.width = 640;
+        this.canvas.height = 480;
+        
         // Store timestamp for FPS calculation
         this.lastDrawTime = 0;
         this.frameCount = 0;
@@ -9,8 +14,6 @@ class MovementAnalysisApp {
         this.targetFrameInterval = 1000 / 30; // Increase to 30 FPS like iris-track
         
         this.video = document.getElementById('video');
-        this.canvas = document.getElementById('output');
-        this.resetBtn = document.getElementById('resetBtn');
         
         this.detector = new PoseDetector();
         this.visualizer = new PoseVisualizer(this.canvas);
@@ -20,89 +23,87 @@ class MovementAnalysisApp {
         this.analyticsInterval = null; // To hold interval for analytics updates
         this.lastPoseDetectionTime = 0;
         this.detectionInterval = 1000 / 30;  // Limit to 30 FPS
-        this.setupEventListeners();
+        
+        // Add video error handling
+        this.video.onerror = (e) => {
+            console.error('Video error:', e);
+        };
+        
+        this.video.onplaying = () => {
+            console.log('Video is actually playing');
+        };
     }
 
     async initialize() {
         try {
-            console.log('Starting camera initialization...');
+            console.log('1. Starting initialization...');
             const stream = await navigator.mediaDevices.getUserMedia({
                 video: { 
-                    width: { ideal: 640 },
-                    height: { ideal: 480 },
-                    frameRate: { max: 60 }  // Allow higher framerates
+                    width: 640,
+                    height: 480,
+                    frameRate: 30
                 },
                 audio: false
             });
+            console.log('2. Camera access granted');
             this.video.srcObject = stream;
             
             return new Promise(async resolve => {
                 this.video.onloadedmetadata = async () => {
+                    console.log('3. Video metadata loaded');
                     this.video.play();
-                    console.log('Camera initialized successfully');
-                    // Start everything immediately
-                    await this.startTracking();
-                    resolve(true);
+                    console.log('4. Video playing');
+                    
+                    // Initialize detector immediately
+                    document.getElementById('loading').style.display = 'flex';
+                    console.log('5. Starting detector initialization');
+                    const initialized = await this.detector.initialize();
+                    console.log('6. Detector initialized:', initialized);
+                    document.getElementById('loading').style.display = 'none';
+                    
+                    if (initialized) {
+                        console.log('7. Starting detection loop');
+                        this.detectAndDraw();
+                    } else {
+                        console.error('Failed to initialize detector');
+                    }
+                    resolve(initialized);
                 };
-                // Add error timeout
-                setTimeout(() => resolve(false), 10000);
             });
         } catch (error) {
-            console.error('Camera initialization error:', error);
+            console.error('Initialization error:', error);
             return false;
         }
     }
 
-    async startTracking() {
-        // Initialize detector
-        document.getElementById('loading').style.display = 'flex';
-        const initialized = await this.detector.initialize();
-        document.getElementById('loading').style.display = 'none';
-        
-        if (initialized) {
-            // Start immediate tracking
-            this.detectAndDraw();
-            // Update metrics more frequently
-            this.analyticsInterval = setInterval(() => {
-                if (this.detector.lastPose) {
-                    this.analyzer.updateMetrics(this.detector.lastPose, this.detector);
-                }
-            }, 33); // ~30fps updates
-        }
-    }
-
-    setupEventListeners() {
-        this.resetBtn.addEventListener('click', () => this.reset());
-    }
-
-    reset() {
-        this.analyzer.reset();
-        this.visualizer.clear();
-        if (this.analyzer.baselineAngles) {
-            this.analyzer.baselineAngles = null;
-        }
-    }
-
     async detectAndDraw() {
-        // Always running
+        console.log('8. In detectAndDraw');
         const now = performance.now();
-        const elapsed = now - this.lastFrameTime;
         
-        // Use RAF timing instead of manual frame skipping
-        this.lastFrameTime = now;
-
-        let pose = await this.detector.detectPose(this.video);
-        if (pose) {
-            this.visualizer.drawSkeleton(pose);
-            this.visualizer.drawKeypoints(pose);
-            // Only draw angles if we're in full body mode
-            if (this.analyzer.mode === 'full') {
+        // Clear canvas before drawing
+        this.visualizer.clear();
+        
+        try {
+            let pose = await this.detector.detectPose(this.video);
+            console.log('9. Pose detection result:', pose ? 'Success' : 'No pose');
+            
+            if (pose) {
+                console.log('10. Drawing pose');
+                this.visualizer.drawSkeleton(pose);
+                this.visualizer.drawKeypoints(pose);
                 const angles = this.detector.calculateJointAngles(pose);
                 this.visualizer.drawAngles(pose, angles);
+                // Update metrics
+                this.analyzer.updateMetrics(pose, this.detector);
             }
+        } catch (error) {
+            console.error('Detection error:', error);
         }
         
-        requestAnimationFrame(() => this.detectAndDraw());
+        // Ensure loop continues even if there's an error
+        if (this.isRunning) {
+            requestAnimationFrame(() => this.detectAndDraw());
+        }
     }
 }
 

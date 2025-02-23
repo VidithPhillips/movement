@@ -3,7 +3,13 @@ class PoseVisualizer {
         this.ctx = canvas.getContext('2d', {
             alpha: false,
             desynchronized: true,
+            willReadFrequently: false
         });
+
+        // Set canvas size
+        canvas.width = 640;
+        canvas.height = 480;
+
         this.connections = [
             ['nose', 'left_eye'], ['nose', 'right_eye'],
             ['left_eye', 'left_ear'], ['right_eye', 'right_ear'],
@@ -62,6 +68,8 @@ class PoseVisualizer {
         if (!pose || !pose.keypoints) return;
         
         const ctx = this.ctx;
+        ctx.strokeStyle = this.colors.skeleton;
+        ctx.lineWidth = this.lineWidth;
         
         this.connections.forEach(([start, end]) => {
             const startPoint = pose.keypoints.find(kp => kp.name === start);
