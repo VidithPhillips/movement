@@ -15,37 +15,45 @@ class PoseDetector {
         // Pre-allocate vectors for 3D calculations
         this.v1 = { x: 0, y: 0, z: 0 };
         this.v2 = { x: 0, y: 0, z: 0 };
+        // Pre-allocate all commonly used objects to reduce garbage collection
+        this.angles = {};
+        this.metrics = {};
+        this.posture = {};
+        this.points = {};
+        // Pre-calculate common values
+        this.TWO_PI = 2 * Math.PI;
+        // Use TypedArrays for better performance
+        this.vectorBuffer = new Float32Array(6); // [v1.x, v1.y, v1.z, v2.x, v2.y, v2.z]
     }
 
     async initialize() {
         try {
             console.log('Starting detector initialization...');
            
-            // First ensure TF backend is ready
-            if (!tf.getBackend()) {
-                await tf.setBackend('webgl');
-            }
+            // First, explicitly set and wait for WebGL backend
+            await tf.setBackend('webgl');
             await tf.ready();
-            console.log('TensorFlow backend ready:', tf.getBackend());
+            console.log('TensorFlow backend initialized:', tf.getBackend());
 
-            const model = poseDetection.SupportedModels.BLAZEPOSE;
-            const detectorConfig = {
-                enableSmoothing: true,
-                runtime: 'mediapipe',
-                solutionPath: 'https://cdn.jsdelivr.net/npm/@mediapipe/pose',
-                modelType: 'full',
-                enableTracking: true,
-                refineLandmarks: true,
-                minDetectionConfidence: 0.3,
-                minTrackingConfidence: 0.3
-            };
-            
+            // Check if all required libraries are loaded
             if (!window.poseDetection) {
                 throw new Error('Pose detection library not loaded');
             }
 
+            // Use lite model for faster initialization
+            const model = poseDetection.SupportedModels.BLAZEPOSE;
+            const detectorConfig = {
+                enableSmoothing: true,
+                runtime: 'mediapipe',
+                modelType: 'lite',
+                enableTracking: true,
+                minDetectionConfidence: 0.3,
+                minTrackingConfidence: 0.3
+            };
+
             console.log('Creating detector with config:', detectorConfig);
             this.detector = await poseDetection.createDetector(model, detectorConfig);
+            
             if (!this.detector) {
                 throw new Error('Failed to create detector');
             }
@@ -56,9 +64,9 @@ class PoseDetector {
         } catch (error) {
             console.error('Detector initialization error:', error.message);
             console.error('Full error:', error);
-            console.log('TF Backend status:', tf.getBackend());
-            console.log('MediaPipe status:', !!window.pose);
-            console.log('PoseDetection status:', !!window.poseDetection);
+            // Log the state of dependencies
+            console.log('TF Backend:', tf.getBackend());
+            console.log('PoseDetection available:', !!window.poseDetection);
             alert('Failed to initialize pose detector. Please check console for details.');
             return false;
         }
@@ -107,18 +115,21 @@ class PoseDetector {
     calculateAngle(p1, p2, p3) {
         if (!p1 || !p2 || !p3) return null;
         
-        if (p1.z !== undefined && p2.z !== undefined && p3.z !== undefined) {
-            // Reuse pre-allocated vectors
-            this.v1.x = p1.x - p2.x;
-            this.v1.y = p1.y - p2.y;
-            this.v1.z = p1.z - p2.z;
-            this.v2.x = p3.x - p2.x;
-            this.v2.y = p3.y - p2.y;
-            this.v2.z = p3.z - p2.z;
+        const has3D = 'z' in p1 && 'z' in p2 && 'z' in p3;
+        if (has3D) {
+            // Use TypedArray for vector calculations
+            this.vectorBuffer[0] = p1.x - p2.x;
+            this.vectorBuffer[1] = p1.y - p2.y;
+            this.vectorBuffer[2] = p1.z - p2.z;
+            this.vectorBuffer[3] = p3.x - p2.x;
+            this.vectorBuffer[4] = p3.y - p2.y;
+            this.vectorBuffer[5] = p3.z - p2.z;
             
-            const dot = this.v1.x * this.v2.x + this.v1.y * this.v2.y + this.v1.z * this.v2.z;
-            const v1mag = Math.hypot(this.v1.x, this.v1.y, this.v1.z);
-            const v2mag = Math.hypot(this.v2.x, this.v2.y, this.v2.z);
+            const dot = this.vectorBuffer[0] * this.vectorBuffer[3] + 
+                       this.vectorBuffer[1] * this.vectorBuffer[4] + 
+                       this.vectorBuffer[2] * this.vectorBuffer[5];
+            const v1mag = Math.hypot(this.vectorBuffer[0], this.vectorBuffer[1], this.vectorBuffer[2]);
+            const v2mag = Math.hypot(this.vectorBuffer[3], this.vectorBuffer[4], this.vectorBuffer[5]);
             
             return Math.acos(dot / (v1mag * v2mag)) * this.PI_180;
         }

@@ -6,7 +6,7 @@ class MovementAnalysisApp {
         this.fps = 0;
         this.rafId = null;  // Store requestAnimationFrame ID
         this.lastFrameTime = 0;
-        this.frameInterval = 1000 / 24;  // Target 24 FPS
+        this.targetFrameInterval = 1000 / 24; // Target 24 FPS
         
         this.video = document.getElementById('video');
         this.canvas = document.getElementById('output');
@@ -124,6 +124,15 @@ class MovementAnalysisApp {
         if (!this.isRunning) return;
 
         const now = performance.now();
+        const elapsed = now - this.lastFrameTime;
+        
+        // Skip frames to maintain target frame rate
+        if (elapsed < this.targetFrameInterval) {
+            requestAnimationFrame(() => this.detectAndDraw());
+            return;
+        }
+        this.lastFrameTime = now;
+
         const timeSinceLastDetection = now - this.lastPoseDetectionTime;
 
         let pose = this.detector.lastPose;

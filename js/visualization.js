@@ -58,11 +58,10 @@ class PoseVisualizer {
     drawSkeleton(pose) {
         if (!pose || !pose.keypoints) return;
 
-        this.ctx.strokeStyle = this.colors.skeleton;
-        this.ctx.lineWidth = 4;
-        this.ctx.lineCap = 'round';    // Round line endings
-        this.ctx.lineJoin = 'round';   // Round line joints
-
+        const ctx = this.ctx;
+        // Batch all drawing operations
+        ctx.beginPath();
+        
         this.connections.forEach(([start, end]) => {
             const startPoint = pose.keypoints.find(kp => kp.name === start);
             const endPoint = pose.keypoints.find(kp => kp.name === end);
@@ -70,21 +69,11 @@ class PoseVisualizer {
             if (startPoint && endPoint && 
                 startPoint.score > 0.3 && 
                 endPoint.score > 0.3) {
-                this.ctx.strokeStyle = this.colors.outline;
-                this.ctx.lineWidth = 6;
-                this.ctx.beginPath();
-                this.ctx.moveTo(startPoint.x, startPoint.y);
-                this.ctx.lineTo(endPoint.x, endPoint.y);
-                this.ctx.stroke();
-
-                this.ctx.strokeStyle = this.colors.skeleton;
-                this.ctx.lineWidth = 4;
-                this.ctx.beginPath();
-                this.ctx.moveTo(startPoint.x, startPoint.y);
-                this.ctx.lineTo(endPoint.x, endPoint.y);
-                this.ctx.stroke();
+                ctx.moveTo(startPoint.x, startPoint.y);
+                ctx.lineTo(endPoint.x, endPoint.y);
             }
         });
+        ctx.stroke();
     }
 
     drawAngles(pose, angles) {

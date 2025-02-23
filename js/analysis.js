@@ -1,5 +1,11 @@
 class MovementAnalyzer {
     constructor() {
+        // Cache DOM elements
+        this.bodyAnglesDiv = document.getElementById('bodyAngles');
+        this.headFaceDiv = document.getElementById('headFaceMetrics');
+        this.postureDiv = document.getElementById('postureMetrics');
+        // Pre-allocate string builder for HTML
+        this.htmlBuilder = [];
         this.angleHistory = {
             rightElbow: [],
             leftElbow: [],
@@ -13,6 +19,12 @@ class MovementAnalyzer {
             leftWrist: []
         };
         this.baselineAngles = null;
+        // Use Map for O(1) lookups
+        this.jointNameMap = new Map([
+            ['right_elbow', 'Right Elbow'],
+            ['left_elbow', 'Left Elbow'],
+            // ... other mappings
+        ]);
     }
 
     setBaseline(angles) {
@@ -46,31 +58,35 @@ class MovementAnalyzer {
     }
 
     updateBodyAnglesDOM(angles) {
-        const bodyAnglesDiv = document.getElementById('bodyAngles');
-        bodyAnglesDiv.innerHTML = Object.entries(angles)
-            .map(([joint, angle]) => {
-                let changeInfo = "";
-                const history = this.angleHistory[joint];
-                if (history && history.length >= 2) {
-                    const change = history[history.length - 1] - history[history.length - 2];
-                    const changeSymbol = change > 0 ? '↑' : change < 0 ? '↓' : '→';
-                    changeInfo = `<div class="change-indicator ${change > 0 ? 'positive' : change < 0 ? 'negative' : 'neutral'}">
-                        ${changeSymbol} ${Math.abs(change).toFixed(1)}°
-                    </div>`;
-                }
-                
-                return `<div class="metric-value">
-                    <div class="metric-label">${this.formatJointName(joint)}</div>
-                    <div class="metric-number">
-                        ${angle ? angle.toFixed(1) : 'N/A'}°
-                        ${changeInfo}
-                    </div>
+        this.htmlBuilder.length = 0;
+        
+        for (const [joint, angle] of Object.entries(angles)) {
+            let changeInfo = "";
+            const history = this.angleHistory[joint];
+            if (history && history.length >= 2) {
+                const change = history[history.length - 1] - history[history.length - 2];
+                const changeSymbol = this.getChangeSymbol(change);
+                changeInfo = `<div class="change-indicator ${change > 0 ? 'positive' : change < 0 ? 'negative' : 'neutral'}">
+                    ${changeSymbol} ${Math.abs(change).toFixed(1)}°
                 </div>`;
-            }).join('');
+            }
+            
+            this.htmlBuilder.push(`<div class="metric-value">
+                <div class="metric-label">${this.formatJointName(joint)}</div>
+                <div class="metric-number">
+                    ${angle ? angle.toFixed(1) : 'N/A'}°
+                    ${changeInfo}
+                </div>
+            </div>`);
+        }
+        this.bodyAnglesDiv.innerHTML = this.htmlBuilder.join('');
+    }
+
+    getChangeSymbol(change) {
+        return change > 0 ? '↑' : change < 0 ? '↓' : '→';
     }
 
     updateHeadFaceDOM(metrics) {
-        const headFaceDiv = document.getElementById('headFaceMetrics');
         const formattedMetrics = {
             'Head Yaw': metrics.headYaw ? `${metrics.headYaw.toFixed(1)}°` : 'N/A',
             'Head Pitch': metrics.headPitch ? `${metrics.headPitch.toFixed(1)}°` : 'N/A',
@@ -78,7 +94,7 @@ class MovementAnalyzer {
             'Eye Symmetry': metrics.eyeSymmetry ? `${metrics.eyeSymmetry.toFixed(1)}` : 'N/A'
         };
 
-        headFaceDiv.innerHTML = Object.entries(formattedMetrics)
+        this.headFaceDiv.innerHTML = Object.entries(formattedMetrics)
             .map(([label, value]) => `
                 <div class="metric-value">
                     <div class="metric-label">${label}</div>
@@ -88,14 +104,13 @@ class MovementAnalyzer {
     }
 
     updatePostureDOM(posture) {
-        const postureDiv = document.getElementById('postureMetrics');
         const formattedMetrics = {
             'Spine Angle': posture.spineAngle ? `${posture.spineAngle.toFixed(1)}°` : 'N/A',
             'Shoulder Level': posture.shoulderLevel ? `${posture.shoulderLevel.toFixed(1)}°` : 'N/A',
             'Body Symmetry': posture.symmetry ? `${posture.symmetry.toFixed(1)}°` : 'N/A'
         };
 
-        postureDiv.innerHTML = Object.entries(formattedMetrics)
+        this.postureDiv.innerHTML = Object.entries(formattedMetrics)
             .map(([label, value]) => `
                 <div class="metric-value">
                     <div class="metric-label">${label}</div>

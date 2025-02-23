@@ -10,17 +10,13 @@
     <title>Professional Movement Analysis</title>
     <link rel="stylesheet" href="styles.css">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500&display=swap" rel="stylesheet">
-    <!-- MediaPipe dependencies first -->
-    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/pose" crossorigin="anonymous"></script>
-    <!-- Latest TensorFlow.js -->
+    <!-- Load TF.js first -->
     <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs-core@4.15.0"></script>
-    <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs-converter@4.15.0"></script>
     <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs-backend-webgl@4.15.0"></script>
-    <script>
-        // Initialize TF.js backend
-        tf.setBackend('webgl');
-    </script>
-    <!-- Latest TF.js models -->
+    <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs-converter@4.15.0"></script>
+    <!-- Then load MediaPipe -->
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/pose@0.5.1675469404/pose.js"></script>
+    <!-- Finally load pose-detection -->
     <script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/pose-detection@2.1.3"></script>
 </head>
 <body>
