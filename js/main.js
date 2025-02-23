@@ -6,19 +6,17 @@ class MovementAnalysisApp {
         this.fps = 0;
         this.rafId = null;  // Store requestAnimationFrame ID
         this.lastFrameTime = 0;
-        this.targetFrameInterval = 1000 / 24; // Target 24 FPS
+        this.targetFrameInterval = 1000 / 30; // Increase to 30 FPS like iris-track
         
         this.video = document.getElementById('video');
         this.canvas = document.getElementById('output');
-        this.startBtn = document.getElementById('startBtn');
         this.resetBtn = document.getElementById('resetBtn');
-        this.baselineBtn = document.getElementById('baselineBtn');
         
         this.detector = new PoseDetector();
         this.visualizer = new PoseVisualizer(this.canvas);
         this.analyzer = new MovementAnalyzer();
         
-        this.isRunning = false;
+        this.isRunning = true; // Start running immediately
         this.analyticsInterval = null; // To hold interval for analytics updates
         this.lastPoseDetectionTime = 0;
         this.detectionInterval = 1000 / 30;  // Limit to 30 FPS
@@ -28,38 +26,42 @@ class MovementAnalysisApp {
     async initialize() {
         try {
             console.log('Starting camera initialization...');
-            // Setup camera
             const stream = await navigator.mediaDevices.getUserMedia({
                 video: { 
                     width: { ideal: 640 },
                     height: { ideal: 480 },
-                    frameRate: { ideal: 24 }  // Lower framerate for better performance
+                    frameRate: { ideal: 30 }
                 },
                 audio: false
             });
             this.video.srcObject = stream;
             
-            return new Promise(resolve => {
-                this.video.onloadedmetadata = () => {
+            return new Promise(async resolve => {
+                this.video.onloadedmetadata = async () => {
                     this.video.play();
                     console.log('Camera initialized successfully');
                     this.canvas.width = this.video.width;
                     this.canvas.height = this.video.height;
-                    // Enable hardware acceleration
-                    this.canvas.getContext('2d', { 
-                        alpha: false,
-                        desynchronized: true
-                    });
-                    resolve(true);
-                };
-                
-                // Add timeout for camera initialization
-                setTimeout(() => {
-                    if (!this.video.videoWidth) {
-                        console.error('Camera initialization timeout');
-                        resolve(false);
+                    
+                    // Initialize detector immediately
+                    document.getElementById('loading').style.display = 'flex';
+                    const initialized = await this.detector.initialize();
+                    document.getElementById('loading').style.display = 'none';
+                    
+                    if (initialized) {
+                        // Start detection loop immediately
+                        this.detectAndDraw();
+                        // Start analytics updates
+                        this.analyticsInterval = setInterval(() => {
+                            const pose = this.detector.lastPose;
+                            if (pose) {
+                                this.analyzer.updateMetrics(pose, this.detector);
+                            }
+                        }, 500);
                     }
-                }, 10000);
+                    
+                    resolve(initialized);
+                };
             });
         } catch (error) {
             console.error('Camera initialization error:', error);
@@ -69,47 +71,7 @@ class MovementAnalysisApp {
     }
 
     setupEventListeners() {
-        this.startBtn.addEventListener('click', () => this.toggleAnalysis());
         this.resetBtn.addEventListener('click', () => this.reset());
-        this.baselineBtn.addEventListener('click', () => this.captureBaseline());
-    }
-
-    captureBaseline() {
-        if (!this.detector.lastPose) {
-            alert("No pose detected yet. Please ensure you are in frame before capturing the baseline.");
-            return;
-        }
-        // Calculate current joint angles and set as baseline
-        const angles = this.detector.calculateJointAngles(this.detector.lastPose);
-        this.analyzer.setBaseline(angles);
-        alert("Baseline captured!");
-    }
-
-    async toggleAnalysis() {
-        if (!this.isRunning) {
-            document.getElementById('loading').style.display = 'flex';
-            const initialized = await this.detector.initialize();
-            document.getElementById('loading').style.display = 'none';
-            if (!initialized) {
-                alert('Failed to initialize pose detector');
-                return;
-            }
-            this.isRunning = true;
-            this.startBtn.textContent = 'Stop Analysis';
-            // Start the drawing loop
-            this.detectAndDraw();
-            // Start analytics updates every 500ms
-            this.analyticsInterval = setInterval(() => {
-                const pose = this.detector.lastPose;
-                if (pose) {
-                    this.analyzer.updateMetrics(pose, this.detector);
-                }
-            }, 500);
-        } else {
-            this.isRunning = false;
-            this.startBtn.textContent = 'Start Analysis';
-            clearInterval(this.analyticsInterval);
-        }
     }
 
     reset() {

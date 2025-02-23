@@ -29,24 +29,16 @@ class PoseDetector {
     async initialize() {
         try {
             console.log('Starting detector initialization...');
-           
-            // First, explicitly set and wait for WebGL backend
+            
             await tf.setBackend('webgl');
             await tf.ready();
-            console.log('TensorFlow backend initialized:', tf.getBackend());
-
-            // Check if all required libraries are loaded
-            if (!window.poseDetection) {
-                throw new Error('Pose detection library not loaded');
-            }
-
-            // Use lite model for faster initialization
+            
+            // Simplified configuration like iris-track
             const model = poseDetection.SupportedModels.BLAZEPOSE;
             const detectorConfig = {
-                enableSmoothing: true,
                 runtime: 'mediapipe',
                 modelType: 'lite',
-                enableTracking: true,
+                enableSmoothing: true,
                 minDetectionConfidence: 0.3,
                 minTrackingConfidence: 0.3
             };
@@ -54,20 +46,11 @@ class PoseDetector {
             console.log('Creating detector with config:', detectorConfig);
             this.detector = await poseDetection.createDetector(model, detectorConfig);
             
-            if (!this.detector) {
-                throw new Error('Failed to create detector');
-            }
-
             this.isInitialized = true;
             console.log('Detector initialized successfully');
             return true;
         } catch (error) {
-            console.error('Detector initialization error:', error.message);
-            console.error('Full error:', error);
-            // Log the state of dependencies
-            console.log('TF Backend:', tf.getBackend());
-            console.log('PoseDetection available:', !!window.poseDetection);
-            alert('Failed to initialize pose detector. Please check console for details.');
+            console.error('Detector initialization error:', error);
             return false;
         }
     }
