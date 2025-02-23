@@ -80,41 +80,30 @@ class PoseDetector {
                 return null;
             }
 
-            // Convert video to tensor efficiently
-            const videoTensor = tf.tidy(() => {
-                const tensor = tf.browser.fromPixels(video);
-                // Normalize and reshape for the model
-                return tf.div(tensor, 255.0)
-                    .expandDims(0)
-                    .transpose([0, 3, 1, 2]);  // NCHW format for GPU
+            // Run YOLO11 pose detection by passing the video element directly
+            console.log("Running pose detection on video element...");
+            const results = await this.detector.predict(video, {
+                 size: 640,
+                 flip: true,
+                 batchSize: 1,
+                 maxOverlap: 0.45,
+                 gpuAcceleration: true
             });
-
-            // Run YOLO11 pose detection
-            const results = await this.detector.predict(
-                videoTensor,
-                {
-                    size: 640,
-                    flip: true,
-                    batchSize: 1,
-                    maxOverlap: 0.45,
-                    gpuAcceleration: true
-                }
-            );
             
-            // Clean up tensor
-            videoTensor.dispose();
+            console.log("Raw detection results:", results);
 
-            if (results && results.length > 0) {
-                const pose = results[0];
-                return {
-                    keypoints: pose.keypoints.map(kp => ({
-                        x: kp.x,
-                        y: kp.y,
-                        score: kp.confidence,
-                        name: kp.class
-                    })),
-                    score: pose.confidence
-                };
+            if (results && Array.isArray(results) && results.length > 0) {
+                 const pose = results[0];
+                 console.log("Detected Pose:", pose);
+                 return {
+                     keypoints: pose.keypoints.map(kp => ({
+                         x: kp.x,
+                         y: kp.y,
+                         score: kp.confidence,
+                         name: kp.class
+                     })),
+                     score: pose.confidence
+                 };
             }
             
             return null;
