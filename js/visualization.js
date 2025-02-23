@@ -1,6 +1,7 @@
 class PoseVisualizer {
     constructor(canvas) {
         this.ctx = canvas.getContext('2d');
+        this.ctx.imageSmoothingEnabled = true;
         this.connections = [
             ['nose', 'left_eye'], ['nose', 'right_eye'],
             ['left_eye', 'left_ear'], ['right_eye', 'right_ear'],
@@ -13,9 +14,10 @@ class PoseVisualizer {
             ['left_knee', 'left_ankle'], ['right_knee', 'right_ankle']
         ];
         this.colors = {
-            keypoints: '#00FF00',
-            skeleton: '#00FF00',
-            text: '#FFFFFF'
+            keypoints: '#00ff00',    // Bright green for better visibility
+            skeleton: '#ffffff',      // White for skeleton
+            text: '#00ff00',         // Green text
+            outline: '#000000'       // Black outline for contrast
         };
     }
 
@@ -23,11 +25,14 @@ class PoseVisualizer {
         if (!pose || !pose.keypoints) return;
 
         this.ctx.fillStyle = this.colors.keypoints;
+        this.ctx.strokeStyle = this.colors.outline;
+        this.ctx.lineWidth = 3;
         pose.keypoints.forEach(keypoint => {
             if (keypoint.score > 0.3) {
                 this.ctx.beginPath();
-                this.ctx.arc(keypoint.x, keypoint.y, 4, 0, 2 * Math.PI);
+                this.ctx.arc(keypoint.x, keypoint.y, 8, 0, 2 * Math.PI);
                 this.ctx.fill();
+                this.ctx.stroke();
             }
         });
     }
@@ -36,7 +41,9 @@ class PoseVisualizer {
         if (!pose || !pose.keypoints) return;
 
         this.ctx.strokeStyle = this.colors.skeleton;
-        this.ctx.lineWidth = 2;
+        this.ctx.lineWidth = 4;
+        this.ctx.lineCap = 'round';    // Round line endings
+        this.ctx.lineJoin = 'round';   // Round line joints
 
         this.connections.forEach(([start, end]) => {
             const startPoint = pose.keypoints.find(kp => kp.name === start);
@@ -45,6 +52,15 @@ class PoseVisualizer {
             if (startPoint && endPoint && 
                 startPoint.score > 0.3 && 
                 endPoint.score > 0.3) {
+                this.ctx.strokeStyle = this.colors.outline;
+                this.ctx.lineWidth = 6;
+                this.ctx.beginPath();
+                this.ctx.moveTo(startPoint.x, startPoint.y);
+                this.ctx.lineTo(endPoint.x, endPoint.y);
+                this.ctx.stroke();
+
+                this.ctx.strokeStyle = this.colors.skeleton;
+                this.ctx.lineWidth = 4;
                 this.ctx.beginPath();
                 this.ctx.moveTo(startPoint.x, startPoint.y);
                 this.ctx.lineTo(endPoint.x, endPoint.y);
@@ -56,8 +72,10 @@ class PoseVisualizer {
     drawAngles(pose, angles) {
         if (!pose || !angles) return;
 
-        this.ctx.font = '14px Arial';
+        this.ctx.font = 'bold 16px Inter';
         this.ctx.fillStyle = this.colors.text;
+        this.ctx.textAlign = 'center';
+        this.ctx.textBaseline = 'middle';
 
         // Draw right elbow angle
         const rightElbow = pose.keypoints.find(kp => kp.name === 'right_elbow');

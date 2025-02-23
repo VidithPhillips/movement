@@ -1,5 +1,10 @@
 class MovementAnalysisApp {
     constructor() {
+        // Store timestamp for FPS calculation
+        this.lastDrawTime = 0;
+        this.frameCount = 0;
+        this.fps = 0;
+        
         this.video = document.getElementById('video');
         this.canvas = document.getElementById('output');
         this.startBtn = document.getElementById('startBtn');
@@ -12,6 +17,8 @@ class MovementAnalysisApp {
         
         this.isRunning = false;
         this.analyticsInterval = null; // To hold interval for analytics updates
+        this.lastPoseDetectionTime = 0;
+        this.detectionInterval = 1000 / 30;  // Limit to 30 FPS
         this.setupEventListeners();
     }
 
@@ -19,7 +26,11 @@ class MovementAnalysisApp {
         try {
             // Setup camera
             const stream = await navigator.mediaDevices.getUserMedia({
-                video: { width: 640, height: 480 },
+                video: { 
+                    width: { ideal: 640 },
+                    height: { ideal: 480 },
+                    frameRate: { ideal: 30 }
+                },
                 audio: false
             });
             this.video.srcObject = stream;
@@ -29,6 +40,11 @@ class MovementAnalysisApp {
                     this.video.play();
                     this.canvas.width = this.video.width;
                     this.canvas.height = this.video.height;
+                    // Enable hardware acceleration
+                    this.canvas.getContext('2d', { 
+                        alpha: false,
+                        desynchronized: true
+                    });
                     resolve(true);
                 };
             });
@@ -91,14 +107,40 @@ class MovementAnalysisApp {
     async detectAndDraw() {
         if (!this.isRunning) return;
 
-        const pose = await this.detector.detectPose(this.video);
+        const now = performance.now();
+        const timeSinceLastDetection = now - this.lastPoseDetectionTime;
+
+        // Throttle pose detection to maintain consistent frame rate
+        let pose = this.detector.lastPose;
+        if (timeSinceLastDetection >= this.detectionInterval) {
+            pose = await this.detector.detectPose(this.video);
+            this.lastPoseDetectionTime = now;
+        }
         
-        this.visualizer.clear();
+        // Clear with black background
+        const ctx = this.canvas.getContext('2d');
+        ctx.canvas.width = this.video.videoWidth || 640;
+        ctx.canvas.height = this.video.videoHeight || 480;
+        ctx.fillStyle = '#000000';
+        ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
+        
         if (pose) {
             const angles = this.detector.calculateJointAngles(pose);
             this.visualizer.drawSkeleton(pose);
             this.visualizer.drawKeypoints(pose);
             this.visualizer.drawAngles(pose, angles);
+
+            // Calculate and display FPS
+            this.frameCount++;
+            if (now - this.lastDrawTime >= 1000) {
+                this.fps = this.frameCount;
+                this.frameCount = 0;
+                this.lastDrawTime = now;
+                // Optional: Display FPS
+                ctx.font = '16px Inter';
+                ctx.fillStyle = '#ffffff';
+                ctx.fillText(`FPS: ${this.fps}`, 10, 20);
+            }
         }
         
         requestAnimationFrame(() => this.detectAndDraw());

@@ -1,25 +1,45 @@
 body {
     margin: 0;
-    padding: 20px;
+    padding: 0;
     font-family: Arial, sans-serif;
-    background-color: #f0f0f0;
+    background-color: #1a1a1a;
+    color: #ffffff;
+    font-family: 'Inter', sans-serif;
+}
+
+header {
+    background-color: #2d2d2d;
+    padding: 1rem 2rem;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+}
+
+header h1 {
+    margin: 0;
+    font-size: 1.5rem;
+    font-weight: 500;
 }
 
 .container {
-    display: flex;
-    gap: 20px;
-    max-width: 1400px;
+    max-width: 1600px;
     margin: 0 auto;
-    height: calc(100vh - 40px);
+    padding: 2rem;
+}
+
+.main-content {
+    display: grid;
+    grid-template-columns: minmax(640px, 1fr) 1fr;
+    gap: 2rem;
+    align-items: start;
 }
 
 .video-container {
     position: relative;
     width: 640px;
     height: 480px;
-    background: #000;
+    background: #2d2d2d;
     border-radius: 10px;
     overflow: hidden;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.1);
 }
 
 /* Hide the raw camera feed; we only display the skeleton tracking on the canvas */
@@ -43,38 +63,57 @@ video {
     z-index: 10;
 }
 
-button {
+.primary-btn, .secondary-btn {
     padding: 10px 20px;
     border: none;
     border-radius: 5px;
-    background: #2196F3;
     color: white;
     cursor: pointer;
     font-weight: bold;
+    transition: all 0.3s ease;
 }
 
-button:hover {
+.primary-btn {
+    background: #2196F3;
+}
+
+.primary-btn:hover {
     background: #1976D2;
+    transform: translateY(-1px);
 }
 
-.metrics-container {
-    flex: 1;
+.secondary-btn {
+    background: #424242;
+}
+
+.secondary-btn:hover {
+    background: #616161;
+    transform: translateY(-1px);
+}
+
+.metrics-panel {
     display: flex;
     flex-direction: column;
-    gap: 20px;
-    overflow-y: auto;
+    gap: 2rem;
+}
+
+.metrics-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 2rem;
 }
 
 .metric-box {
-    background: white;
+    background: #2d2d2d;
     padding: 20px;
     border-radius: 10px;
-    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    box-shadow: 0 4px 6px rgba(0,0,0,0.1);
 }
 
 .metric-box h3 {
     margin: 0 0 15px 0;
-    color: #333;
+    color: #ffffff;
+    font-weight: 500;
 }
 
 #angleChart {
@@ -83,27 +122,32 @@ button:hover {
     margin-bottom: 20px;
 }
 
-#jointAngles, #movementMetrics {
+.metric-grid {
     display: grid;
     grid-template-columns: repeat(2, 1fr);
     gap: 10px;
 }
 
 .metric-value {
-    background: #f8f8f8;
+    background: #424242;
     padding: 10px;
     border-radius: 5px;
     text-align: center;
+    transition: background-color 0.3s ease;
+}
+
+.metric-value:hover {
+    background: #616161;
 }
 
 .metric-label {
     font-weight: bold;
-    color: #666;
+    color: #ffffff;
     font-size: 0.9em;
 }
 
 .metric-number {
     font-size: 1.2em;
-    color: #2196F3;
+    color: #64B5F6;
     margin-top: 5px;
 } 

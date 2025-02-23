@@ -9,9 +9,12 @@ class PoseDetector {
         try {
             const model = poseDetection.SupportedModels.MOVENET;
             const detectorConfig = {
-                modelType: poseDetection.movenet.modelType.SINGLEPOSE_THUNDER,
+                modelType: poseDetection.movenet.modelType.SINGLEPOSE_LIGHTNING,
                 enableSmoothing: true,
-                minPoseScore: 0.25
+                minPoseScore: 0.2,
+                multiPoseMaxDimension: 256,
+                enableTracking: true,
+                trackerType: 'keypoint'
             };
             this.detector = await poseDetection.createDetector(model, detectorConfig);
             this.isInitialized = true;
