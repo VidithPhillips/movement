@@ -1,4 +1,5 @@
-class PoseVisualizer3D {
+// Make PoseVisualizer3D globally available
+window.PoseVisualizer3D = class PoseVisualizer3D {
     constructor(container) {
         if (!window.THREE) {
             throw new Error('THREE.js must be loaded first');

@@ -36,34 +36,38 @@ class MovementAnalysisApp {
 
     async initialize() {
         try {
-            console.log('1. Starting initialization...');
-            const stream = await navigator.mediaDevices.getUserMedia({
-                video: { 
-                    width: 640,
-                    height: 480,
-                    frameRate: 30
-                },
-                audio: false
-            });
-            console.log('2. Camera access granted');
-            this.video.srcObject = stream;
+            console.log('Waiting for Three.js...');
+            await waitForThree();
+            console.log('Three.js loaded successfully');
 
-            // Wait for video metadata and start playing once loaded
-            await new Promise((resolve, reject) => {
-                const timeoutId = setTimeout(() => {
-                    reject(new Error('Video metadata load timeout'));
-                }, 10000);
-                this.video.onloadedmetadata = async () => {
-                    clearTimeout(timeoutId);
-                    try {
-                        await this.video.play();
-                        console.log('3. Video metadata loaded & playing');
-                        resolve();
-                    } catch (err) {
-                        reject(err);
-                    }
-                };
-            });
+            // Check dependencies
+            if (!window.THREE) {
+                throw new Error('THREE.js not loaded');
+            }
+            if (!window.PoseVisualizer3D) {
+                throw new Error('PoseVisualizer3D not loaded');
+            }
+            if (!window.MovementAnalyzer) {
+                throw new Error('MovementAnalyzer not loaded');
+            }
+
+            console.log('All dependencies loaded');
+
+            // Get DOM elements
+            const video = document.getElementById('video');
+            const canvas = document.getElementById('output');
+            
+            if (!video || !canvas) {
+                throw new Error('Required video or canvas element not found');
+            }
+
+            // Initialize pose detection
+            console.log('Initializing MediaPipePose...');
+            window.poseDetector = new MediaPipePose(video, canvas);
+            console.log('MediaPipePose initialized');
+            
+            await window.poseDetector.start();
+            console.log('Pose detection started');
 
             // Show loading indicator until detector is ready
             document.getElementById('loading').style.display = 'flex';
@@ -123,45 +127,67 @@ class MovementAnalysisApp {
     }
 }
 
-// Start the application when the page loads
-window.onload = async () => {
-    try {
-        // Debug logging
-        console.log('Initialization start');
-        console.log('THREE loaded:', typeof THREE !== 'undefined');
-        console.log('PoseVisualizer3D loaded:', typeof PoseVisualizer3D !== 'undefined');
-        console.log('MovementAnalyzer loaded:', typeof MovementAnalyzer !== 'undefined');
+// Start initialization when DOM is ready
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', async () => {
+        try {
+            // Debug logging
+            console.log('Initialization start');
+            console.log('THREE loaded:', typeof THREE !== 'undefined');
+            console.log('PoseVisualizer3D loaded:', typeof PoseVisualizer3D !== 'undefined');
+            console.log('MovementAnalyzer loaded:', typeof MovementAnalyzer !== 'undefined');
 
-        // Check DOM elements
-        const video = document.getElementById('video');
-        const canvas = document.getElementById('output');
-        console.log('Video element:', video);
-        console.log('Canvas element:', canvas);
+            // Check DOM elements
+            const video = document.getElementById('video');
+            const canvas = document.getElementById('output');
+            console.log('Video element:', video);
+            console.log('Canvas element:', canvas);
 
-        if (!video || !canvas) {
-            throw new Error('Required video or canvas element not found');
+            if (!video || !canvas) {
+                throw new Error('Required video or canvas element not found');
+            }
+
+            // Initialize pose detection
+            console.log('Initializing MediaPipePose...');
+            window.poseDetector = new MediaPipePose(video, canvas);
+            console.log('MediaPipePose initialized');
+            
+            await window.poseDetector.start();
+            console.log('Pose detection started');
+
+            // Initialize the MovementAnalysisApp
+            const app = new MovementAnalysisApp();
+            await app.initialize();
+
+        } catch (error) {
+            console.error('Initialization failed:', error);
+            document.getElementById('loading').innerHTML = `
+                <div class="loading-error">
+                    Failed to initialize: ${error.message}
+                </div>`;
         }
-
-        // Initialize pose detection
-        console.log('Initializing MediaPipePose...');
-        window.poseDetector = new MediaPipePose(video, canvas);
-        console.log('MediaPipePose initialized');
-        
-        await window.poseDetector.start();
-        console.log('Pose detection started');
-
-    } catch (error) {
-        console.error('Initialization failed:', error);
-        document.getElementById('loading').innerHTML = `
-            <div class="loading-error">
-                Failed to initialize: ${error.message}
-            </div>`;
-    }
-};
+    });
+}
 
 // Clean up on page unload
 window.onbeforeunload = () => {
     if (window.poseDetector) {
         window.poseDetector.stop();
     }
-}; 
+};
+
+async function waitForThree() {
+    return new Promise((resolve) => {
+        if (window.THREE) {
+            resolve();
+        } else {
+            window.addEventListener('load', () => {
+                if (window.THREE) {
+                    resolve();
+                } else {
+                    console.error('Three.js failed to load');
+                }
+            });
+        }
+    });
+} 
