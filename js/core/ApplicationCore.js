@@ -94,4 +94,34 @@ class ErrorHandler {
                 </div>`;
         }
     }
-} 
+}
+
+// Add script loading utility
+class ScriptLoader {
+    static async loadScript(src, retries = 3) {
+        for (let i = 0; i < retries; i++) {
+            try {
+                await new Promise((resolve, reject) => {
+                    const script = document.createElement('script');
+                    script.src = src;
+                    script.onload = resolve;
+                    script.onerror = reject;
+                    document.body.appendChild(script);
+                });
+                return;
+            } catch (error) {
+                if (i === retries - 1) {
+                    throw new ApplicationError(
+                        `Failed to load script: ${src}`,
+                        'SCRIPT_LOAD_FAILED',
+                        true
+                    );
+                }
+                await new Promise(resolve => setTimeout(resolve, 1000 * (i + 1)));
+            }
+        }
+    }
+}
+
+// Make loadScript globally available
+window.loadScript = ScriptLoader.loadScript; 

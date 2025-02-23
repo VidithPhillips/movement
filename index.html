@@ -57,6 +57,13 @@
                 // Initialize core systems
                 await ResourceManager.initialize();
                 
+                // Load MediaPipe dependencies first
+                await Promise.all([
+                    loadScript('https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js'),
+                    loadScript('https://cdn.jsdelivr.net/npm/@mediapipe/drawing_utils/drawing_utils.js'),
+                    loadScript('https://cdn.jsdelivr.net/npm/@mediapipe/pose/pose.js')
+                ]);
+                
                 // Load application scripts in correct dependency order
                 await loadScript('js/3dVisualizer.js');
                 await Promise.all([
