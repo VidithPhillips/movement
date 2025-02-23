@@ -30,7 +30,7 @@ class MovementAnalysisApp {
                 video: { 
                     width: { ideal: 640 },
                     height: { ideal: 480 },
-                    frameRate: { ideal: 30 }
+                    frameRate: { max: 60 }  // Allow higher framerates
                 },
                 audio: false
             });
@@ -40,33 +40,34 @@ class MovementAnalysisApp {
                 this.video.onloadedmetadata = async () => {
                     this.video.play();
                     console.log('Camera initialized successfully');
-                    this.canvas.width = this.video.width;
-                    this.canvas.height = this.video.height;
-                    
-                    // Initialize detector immediately
-                    document.getElementById('loading').style.display = 'flex';
-                    const initialized = await this.detector.initialize();
-                    document.getElementById('loading').style.display = 'none';
-                    
-                    if (initialized) {
-                        // Start detection loop immediately
-                        this.detectAndDraw();
-                        // Start analytics updates
-                        this.analyticsInterval = setInterval(() => {
-                            const pose = this.detector.lastPose;
-                            if (pose) {
-                                this.analyzer.updateMetrics(pose, this.detector);
-                            }
-                        }, 500);
-                    }
-                    
-                    resolve(initialized);
+                    // Start everything immediately
+                    await this.startTracking();
+                    resolve(true);
                 };
+                // Add error timeout
+                setTimeout(() => resolve(false), 10000);
             });
         } catch (error) {
             console.error('Camera initialization error:', error);
-            alert('Failed to access camera. Please ensure camera permissions are granted.');
             return false;
+        }
+    }
+
+    async startTracking() {
+        // Initialize detector
+        document.getElementById('loading').style.display = 'flex';
+        const initialized = await this.detector.initialize();
+        document.getElementById('loading').style.display = 'none';
+        
+        if (initialized) {
+            // Start immediate tracking
+            this.detectAndDraw();
+            // Update metrics more frequently
+            this.analyticsInterval = setInterval(() => {
+                if (this.detector.lastPose) {
+                    this.analyzer.updateMetrics(this.detector.lastPose, this.detector);
+                }
+            }, 33); // ~30fps updates
         }
     }
 
@@ -83,61 +84,21 @@ class MovementAnalysisApp {
     }
 
     async detectAndDraw() {
-        if (!this.isRunning) return;
-
+        // Always running
         const now = performance.now();
         const elapsed = now - this.lastFrameTime;
         
-        // Skip frames to maintain target frame rate
-        if (elapsed < this.targetFrameInterval) {
-            requestAnimationFrame(() => this.detectAndDraw());
-            return;
-        }
+        // Use RAF timing instead of manual frame skipping
         this.lastFrameTime = now;
 
-        const timeSinceLastDetection = now - this.lastPoseDetectionTime;
-
-        let pose = this.detector.lastPose;
-        if (timeSinceLastDetection >= this.detectionInterval) {
-            pose = await this.detector.detectPose(this.video);
-            if (pose) {
-                console.log('Pose detected:', pose);
-            } else {
-                console.log('No pose detected this frame');
-            }
-            this.lastPoseDetectionTime = now;
-        }
-        
-        // Clear with black background
-        const ctx = this.canvas.getContext('2d');
-        ctx.canvas.width = this.video.videoWidth || 640;
-        ctx.canvas.height = this.video.videoHeight || 480;
-        ctx.fillStyle = '#000000';
-        ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
-        
+        let pose = await this.detector.detectPose(this.video);
         if (pose) {
-            const angles = this.detector.calculateJointAngles(pose);
-            const faceMetrics = this.detector.calculateFaceMetrics(pose);
-            const postureMetrics = this.detector.calculatePosture(pose);
-            
-            // Draw visualizations
             this.visualizer.drawSkeleton(pose);
             this.visualizer.drawKeypoints(pose);
-            this.visualizer.drawAngles(pose, angles);
-            
-            // Update metrics display
-            this.analyzer.updateMetrics(pose, this.detector);
-
-            // Calculate and display FPS
-            this.frameCount++;
-            if (now - this.lastDrawTime >= 1000) {
-                this.fps = this.frameCount;
-                this.frameCount = 0;
-                this.lastDrawTime = now;
-                // Optional: Display FPS
-                ctx.font = '16px Inter';
-                ctx.fillStyle = '#ffffff';
-                ctx.fillText(`FPS: ${this.fps}`, 10, 20);
+            // Only draw angles if we're in full body mode
+            if (this.analyzer.mode === 'full') {
+                const angles = this.detector.calculateJointAngles(pose);
+                this.visualizer.drawAngles(pose, angles);
             }
         }
         

@@ -3,7 +3,6 @@ class PoseVisualizer {
         this.ctx = canvas.getContext('2d', {
             alpha: false,
             desynchronized: true,
-            willReadFrequently: false
         });
         this.connections = [
             ['nose', 'left_eye'], ['nose', 'right_eye'],
@@ -33,6 +32,10 @@ class PoseVisualizer {
         this.keyPointRadius = 4;
         this.lineWidth = 4;
         this.outlineWidth = 6;
+        // Pre-compile common values
+        this.TWO_PI = 2 * Math.PI;
+        this.ctx.lineWidth = 2;
+        this.ctx.strokeStyle = this.colors.skeleton;
     }
 
     drawKeypoints(pose) {
@@ -57,10 +60,8 @@ class PoseVisualizer {
 
     drawSkeleton(pose) {
         if (!pose || !pose.keypoints) return;
-
+        
         const ctx = this.ctx;
-        // Batch all drawing operations
-        ctx.beginPath();
         
         this.connections.forEach(([start, end]) => {
             const startPoint = pose.keypoints.find(kp => kp.name === start);
@@ -69,11 +70,12 @@ class PoseVisualizer {
             if (startPoint && endPoint && 
                 startPoint.score > 0.3 && 
                 endPoint.score > 0.3) {
+                ctx.beginPath();
                 ctx.moveTo(startPoint.x, startPoint.y);
                 ctx.lineTo(endPoint.x, endPoint.y);
+                ctx.stroke();
             }
         });
-        ctx.stroke();
     }
 
     drawAngles(pose, angles) {

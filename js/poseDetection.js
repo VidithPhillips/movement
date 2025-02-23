@@ -62,25 +62,19 @@ class PoseDetector {
             const poses = await this.detector.estimatePoses(video, {
                 flipHorizontal: true,
                 maxPoses: 1,
-                scoreThreshold: 0.3,
+                scoreThreshold: 0.2,  // Lower threshold for better detection
                 staticImageMode: false,
-                smoothSegmentation: false
+                enableSmoothing: true
             });
 
             if (poses.length > 0) {
                 const pose = poses[0];
-                // Add basic validation
-                if (!pose.keypoints || pose.keypoints.length === 0) {
-                    console.warn('Invalid pose detected');
-                    return null;
-                }
                 this.lastPose = pose;
                 return pose;
             }
             return null;
         } catch (error) {
-            console.error('Error detecting pose:', error.message);
-            return null;
+            return null;  // Silent fail for performance
         }
     }
 
