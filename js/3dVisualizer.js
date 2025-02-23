@@ -110,8 +110,48 @@ class PoseVisualizer3D {
     }
 
     updateLimbs(landmarks) {
-        // Update arms and legs positions and rotations
-        // ... (implementation details)
+        // Update arms
+        this.updateLimb(
+            this.bodyParts.leftArm,
+            landmarks[11], // left shoulder
+            landmarks[13], // left elbow
+            landmarks[15]  // left wrist
+        );
+        this.updateLimb(
+            this.bodyParts.rightArm,
+            landmarks[12], // right shoulder
+            landmarks[14], // right elbow
+            landmarks[16]  // right wrist
+        );
+
+        // Update legs
+        this.updateLimb(
+            this.bodyParts.leftLeg,
+            landmarks[23], // left hip
+            landmarks[25], // left knee
+            landmarks[27]  // left ankle
+        );
+        this.updateLimb(
+            this.bodyParts.rightLeg,
+            landmarks[24], // right hip
+            landmarks[26], // right knee
+            landmarks[28]  // right ankle
+        );
+    }
+
+    updateLimb(limbMesh, start, mid, end) {
+        if (!start || !mid || !end) return;
+
+        // Position at midpoint
+        const x = (start.x + end.x) / 2;
+        const y = -(start.y + end.y) / 2;
+        const z = (start.z + end.z) / 2;
+
+        limbMesh.position.set(x * 2 - 1, y * 2 + 1, z);
+
+        // Calculate rotation
+        const angle = Math.atan2(end.y - start.y, end.x - start.x);
+        limbMesh.rotation.z = -angle;
     }
 
     animate() {

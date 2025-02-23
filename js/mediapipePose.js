@@ -102,18 +102,11 @@ class MediaPipePose {
         lineWidth: 2
       });
 
-      // Update metrics if available
-      if (window.analyzer) {
-        window.analyzer.updateMetrics({
-          keypoints: results.poseLandmarks.map(lm => ({
-            x: lm.x * this.canvas.width,
-            y: lm.y * this.canvas.height,
-            z: lm.z,
-            score: lm.visibility || 0,
-            name: lm.name
-          }))
-        });
-      }
+      // Update metrics
+      const analyzer = new MovementAnalyzer();
+      analyzer.updateMetrics({
+        poseLandmarks: results.poseLandmarks
+      });
 
       // Update 3D visualization
       this.visualizer3D.updatePose(results);
