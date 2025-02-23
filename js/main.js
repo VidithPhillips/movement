@@ -47,38 +47,43 @@ class MovementAnalysisApp {
             });
             console.log('2. Camera access granted');
             this.video.srcObject = stream;
-            
-            return new Promise((resolve, reject) => {
+
+            // Wait for video metadata and start playing once loaded
+            await new Promise((resolve, reject) => {
+                const timeoutId = setTimeout(() => {
+                    reject(new Error('Video metadata load timeout'));
+                }, 10000);
                 this.video.onloadedmetadata = async () => {
+                    clearTimeout(timeoutId);
                     try {
-                        console.log('3. Video metadata loaded');
                         await this.video.play();
-                        console.log('4. Video playing');
-                        
-                        document.getElementById('loading').style.display = 'flex';
-                        console.log('5. Starting detector initialization');
-                        const initialized = await this.detector.initialize();
-                        console.log('6. Detector initialized:', initialized);
-                        document.getElementById('loading').style.display = 'none';
-                        
-                        if (initialized) {
-                            console.log('7. Starting detection loop');
-                            this.detectAndDraw();
-                            resolve(true);
-                        } else {
-                            reject(new Error('Failed to initialize detector'));
-                        }
-                    } catch (error) {
-                        reject(error);
+                        console.log('3. Video metadata loaded & playing');
+                        resolve();
+                    } catch (err) {
+                        reject(err);
                     }
                 };
-                // Clear timeout on success
-                const timeoutId = setTimeout(() => reject(new Error('Video metadata load timeout')), 10000);
-                this.video.onloadedmetadata = () => {
-                    clearTimeout(timeoutId);
-                    // ... rest of the code
-                };
             });
+
+            // Show loading indicator until detector is ready
+            document.getElementById('loading').style.display = 'flex';
+            console.log('4. Starting detector initialization');
+            const initialized = await this.detector.initialize();
+            console.log('5. Detector initialized:', initialized);
+            document.getElementById('loading').style.display = 'none';
+
+            if (!initialized) {
+                throw new Error('Failed to initialize detector');
+            }
+
+            // Set up loop timing variables
+            this.isRunning = true;
+            this.lastFrameTime = performance.now();
+            this.targetFrameInterval = 1000 / 30; // ~30 FPS
+
+            console.log('6. Starting detection loop');
+            this.detectAndDraw();
+            return true;
         } catch (error) {
             console.error('Initialization error:', error);
             return false;
@@ -86,7 +91,7 @@ class MovementAnalysisApp {
     }
 
     async detectAndDraw() {
-        if (!this.video.readyState === this.video.HAVE_ENOUGH_DATA) {
+        if (this.video.readyState !== this.video.HAVE_ENOUGH_DATA) {
             requestAnimationFrame(() => this.detectAndDraw());
             return;
         }
@@ -109,8 +114,8 @@ class MovementAnalysisApp {
         if (this.isRunning) {
             const now = performance.now();
             if (now - this.lastFrameTime >= this.targetFrameInterval) {
-                requestAnimationFrame(() => this.detectAndDraw());
                 this.lastFrameTime = now;
+                requestAnimationFrame(() => this.detectAndDraw());
             } else {
                 setTimeout(() => this.detectAndDraw(), 1);
             }

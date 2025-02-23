@@ -39,28 +39,28 @@ class PoseDetector {
                 throw new Error('YOLO not loaded');
             }
             
-            // Initialize YOLO11 pose model
+            // Initialize YOLO11 pose model from your local repo (models folder)
             this.detector = await yolo.load({
                 task: 'pose',
                 modelName: 'yolo11n-pose',  // Use nano model for real-time
-                modelPath: 'https://github.com/ultralytics/assets/releases/download/v8.3.0/yolo11n-pose.pt',
+                modelPath: 'models/yolo11n-pose.pt', // Load model locally from repo
                 confidence: 0.3,
                 iou: 0.45,
-                device: 'gpu',  // Use GPU
+                device: 'cpu',  // Use 'cpu' if you suspect your laptop doesn't have GPU support
                 modelSize: 'n',  // nano size for better performance
                 webgl: {
                     powerPreference: 'high-performance',
                     precision: 'highp'
                 }
             });
-
+            
             // Warm up the model
             console.log('Warming up model...');
             const warmupTensor = tf.zeros([1, 640, 480, 3]);
             await this.detector.predict(warmupTensor);
             warmupTensor.dispose();
             console.log('Model warmed up');
-
+            
             console.log('Detector initialized');
             this.isInitialized = true;
             return true;
