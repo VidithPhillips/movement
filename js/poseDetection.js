@@ -41,18 +41,13 @@ class PoseDetector {
             await tf.ready();
             console.log('TensorFlow backend ready:', tf.getBackend());
             
-            // Explicitly check if model exists
-            if (!poseDetection.SupportedModels || !poseDetection.SupportedModels.MoveNet) {
-                throw new Error('MoveNet model not available');
-            }
-            
-            const model = poseDetection.SupportedModels.MoveNet;
+            console.log('Available models:', poseDetection.SupportedModels);
+            const model = 'MoveNet'; // Use string directly instead of enum
             const detectorConfig = {
                 modelType: 'lightning',
                 enableSmoothing: true,
                 scoreThreshold: 0.2,
-                enableTracking: true,
-                multiPoseMaxDimension: 256
+                modelUrl: undefined // Let it use default URL
             };
 
             console.log('Creating detector with config:', detectorConfig);
