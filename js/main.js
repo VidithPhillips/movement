@@ -18,15 +18,26 @@ class MovementAnalysis {
     }
 
     async setupCamera() {
-        const stream = await navigator.mediaDevices.getUserMedia({
-            video: { width: 640, height: 480 },
-            audio: false
-        });
-        this.video.srcObject = stream;
-        await this.video.play();
-        
-        // Start pose detection
-        await this.pose.start();
+        try {
+            const stream = await navigator.mediaDevices.getUserMedia({
+                video: { width: 640, height: 480 },
+                audio: false
+            });
+            this.video.srcObject = stream;
+            await this.video.play();
+            
+            // Start pose detection
+            await this.pose.start();
+        } catch (error) {
+            console.error('Failed to initialize:', error);
+            // Show error in UI
+            const metrics = document.getElementById('movement-metrics');
+            metrics.innerHTML = `
+                <div class="error-message">
+                    Failed to start camera. Please check permissions and refresh.
+                </div>
+            `;
+        }
     }
 }
 
