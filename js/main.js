@@ -128,9 +128,16 @@ class MovementAnalysisApp {
         
         if (pose) {
             const angles = this.detector.calculateJointAngles(pose);
+            const faceMetrics = this.detector.calculateFaceMetrics(pose);
+            const postureMetrics = this.detector.calculatePosture(pose);
+            
+            // Draw visualizations
             this.visualizer.drawSkeleton(pose);
             this.visualizer.drawKeypoints(pose);
             this.visualizer.drawAngles(pose, angles);
+            
+            // Update metrics display
+            this.analyzer.updateMetrics(pose, this.detector);
 
             // Calculate and display FPS
             this.frameCount++;

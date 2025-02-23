@@ -3,8 +3,14 @@ class MovementAnalyzer {
         this.angleHistory = {
             rightElbow: [],
             leftElbow: [],
+            rightShoulder: [],
+            leftShoulder: [],
+            rightHip: [],
+            leftHip: [],
             rightKnee: [],
-            leftKnee: []
+            leftKnee: [],
+            rightWrist: [],
+            leftWrist: []
         };
         this.baselineAngles = null;
     }
@@ -16,12 +22,15 @@ class MovementAnalyzer {
     updateMetrics(pose, detector) {
         if (!pose) return;
 
-        // Calculate joint angles
+        // Calculate all metrics
         const angles = detector.calculateJointAngles(pose);
+        const faceMetrics = detector.calculateFaceMetrics(pose);
+        const postureMetrics = detector.calculatePosture(pose);
         
-        // Update angle history for each joint
+        // Update angle history
         Object.keys(angles).forEach(joint => {
             if (angles[joint] !== null) {
+                this.angleHistory[joint] = this.angleHistory[joint] || [];
                 this.angleHistory[joint].push(angles[joint]);
                 if (this.angleHistory[joint].length > 2) {
                     this.angleHistory[joint].shift();
@@ -29,21 +38,19 @@ class MovementAnalyzer {
             }
         });
 
-        // Calculate movement speeds
-        const speeds = detector.calculateMovementSpeed(pose);
-        
-        // Update DOM with metrics
-        this.updateDOM(angles, speeds);
+        // Update all DOM elements with new metrics
+        this.updateBodyAnglesDOM(angles);
+        this.updateHeadFaceDOM(faceMetrics);
+        this.updatePostureDOM(postureMetrics);
     }
 
-    updateDOM(angles, speeds) {
-        // Update joint angles display
-        const jointAnglesDiv = document.getElementById('jointAngles');
-        jointAnglesDiv.innerHTML = Object.entries(angles)
+    updateBodyAnglesDOM(angles) {
+        const bodyAnglesDiv = document.getElementById('bodyAngles');
+        bodyAnglesDiv.innerHTML = Object.entries(angles)
             .map(([joint, angle]) => {
                 let changeInfo = "";
                 const history = this.angleHistory[joint];
-                if (history.length >= 2) {
+                if (history && history.length >= 2) {
                     const change = history[history.length - 1] - history[history.length - 2];
                     const changeSymbol = change > 0 ? '↑' : change < 0 ? '↓' : '→';
                     changeInfo = `<div class="change-indicator ${change > 0 ? 'positive' : change < 0 ? 'negative' : 'neutral'}">
@@ -59,34 +66,42 @@ class MovementAnalyzer {
                     </div>
                 </div>`;
             }).join('');
+    }
 
-        // Update movement speeds display
-        const movementMetricsDiv = document.getElementById('movementMetrics');
-        movementMetricsDiv.innerHTML = Object.entries(speeds || {})
-            .map(([joint, speed]) => `
+    updateHeadFaceDOM(metrics) {
+        const headFaceDiv = document.getElementById('headFaceMetrics');
+        const formattedMetrics = {
+            'Eye Distance': metrics.eyeDistance ? `${metrics.eyeDistance.toFixed(1)}px` : 'N/A',
+            'Eye Tilt': metrics.eyeTilt ? `${metrics.eyeTilt.toFixed(1)}°` : 'N/A',
+            'Head Rotation': metrics.headRotation ? `${(metrics.headRotation * 100).toFixed(1)}%` : 'N/A',
+            'Head Tilt': metrics.headTilt ? `${metrics.headTilt.toFixed(1)}°` : 'N/A',
+            'Forward Tilt': metrics.headForwardTilt ? `${metrics.headForwardTilt.toFixed(1)}px` : 'N/A'
+        };
+
+        headFaceDiv.innerHTML = Object.entries(formattedMetrics)
+            .map(([label, value]) => `
                 <div class="metric-value">
-                    <div class="metric-label">${this.formatJointName(joint)}</div>
-                    <div class="metric-number">
-                        <span class="speed-value">${speed ? speed.toFixed(1) : 'N/A'}</span>
-                        <span class="unit">units/s</span>
-                    </div>
+                    <div class="metric-label">${label}</div>
+                    <div class="metric-number">${value}</div>
                 </div>
             `).join('');
     }
 
-    updateFaceDOM(faceMetrics) {
-        const faceMetricsDiv = document.getElementById('faceMetrics');
-        faceMetricsDiv.innerHTML = Object.entries(faceMetrics)
-            .map(([key, value]) => {
-                let label = key;
-                if (key === "eyeDistance") label = "Interocular Distance";
-                else if (key === "noseX") label = "Nose X";
-                else if (key === "noseY") label = "Nose Y";
-                return `<div class="metric-value">
-                            <div class="metric-label">${label}</div>
-                            <div class="metric-number">${value ? value.toFixed(1) : 'N/A'}</div>
-                        </div>`;
-            }).join('');
+    updatePostureDOM(posture) {
+        const postureDiv = document.getElementById('postureMetrics');
+        const formattedMetrics = {
+            'Spine Angle': posture.spineAngle ? `${posture.spineAngle.toFixed(1)}°` : 'N/A',
+            'Shoulder Level': posture.shoulderLevel ? `${posture.shoulderLevel.toFixed(1)}°` : 'N/A',
+            'Body Symmetry': posture.symmetry ? `${posture.symmetry.toFixed(1)}°` : 'N/A'
+        };
+
+        postureDiv.innerHTML = Object.entries(formattedMetrics)
+            .map(([label, value]) => `
+                <div class="metric-value">
+                    <div class="metric-label">${label}</div>
+                    <div class="metric-number">${value}</div>
+                </div>
+            `).join('');
     }
 
     formatJointName(name) {

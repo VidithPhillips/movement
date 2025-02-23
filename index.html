@@ -13,8 +13,6 @@
     <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@4.15.0/dist/tf.min.js"></script>
     <!-- Latest TF.js models -->
     <script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/pose-detection@2.1.3/dist/pose-detection.min.js"></script>
-    <!-- Chart.js -->
-    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js" defer></script>
 </head>
 <body>
     <header>
@@ -38,16 +36,16 @@
             <div class="metrics-panel">
                 <div class="metric-box">
                     <h3>Body Angles</h3>
-                    <div id="jointAngles" class="metric-grid"></div>
+                    <div id="bodyAngles" class="metric-grid"></div>
                 </div>
                 <div class="metrics-row">
                     <div class="metric-box">
                         <h3>Head & Face Analysis</h3>
-                        <div id="movementMetrics" class="metric-grid"></div>
+                        <div id="headFaceMetrics" class="metric-grid"></div>
                     </div>
                     <div class="metric-box">
                         <h3>Posture Analysis</h3>
-                        <div id="faceMetrics" class="metric-grid"></div>
+                        <div id="postureMetrics" class="metric-grid"></div>
                     </div>
                 </div>
             </div>

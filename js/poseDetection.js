@@ -85,31 +85,37 @@ class PoseDetector {
         const rightShoulder = this.getKeypoint(pose, 'right_shoulder');
         const rightElbow = this.getKeypoint(pose, 'right_elbow');
         const rightWrist = this.getKeypoint(pose, 'right_wrist');
-        angles.rightElbow = this.calculateAngle(rightShoulder, rightElbow, rightWrist);
-
         const leftShoulder = this.getKeypoint(pose, 'left_shoulder');
         const leftElbow = this.getKeypoint(pose, 'left_elbow');
         const leftWrist = this.getKeypoint(pose, 'left_wrist');
-        angles.leftElbow = this.calculateAngle(leftShoulder, leftElbow, leftWrist);
 
-        // Shoulder angles (relative to vertical)
+        // Leg keypoints
         const rightHip = this.getKeypoint(pose, 'right_hip');
+        const rightKnee = this.getKeypoint(pose, 'right_knee');
+        const rightAnkle = this.getKeypoint(pose, 'right_ankle');
         const leftHip = this.getKeypoint(pose, 'left_hip');
+        const leftKnee = this.getKeypoint(pose, 'left_knee');
+        const leftAnkle = this.getKeypoint(pose, 'left_ankle');
+
+        // Calculate arm angles
+        angles.rightElbow = this.calculateAngle(rightShoulder, rightElbow, rightWrist);
+        angles.leftElbow = this.calculateAngle(leftShoulder, leftElbow, leftWrist);
         angles.rightShoulder = this.calculateAngle(rightHip, rightShoulder, rightElbow);
         angles.leftShoulder = this.calculateAngle(leftHip, leftShoulder, leftElbow);
 
-        // Hip angles
-        const rightKnee = this.getKeypoint(pose, 'right_knee');
-        const leftKnee = this.getKeypoint(pose, 'left_knee');
+        // Calculate leg angles
         angles.rightHip = this.calculateAngle(rightShoulder, rightHip, rightKnee);
         angles.leftHip = this.calculateAngle(leftShoulder, leftHip, leftKnee);
-
-        // Knee angles
-        const rightAnkle = this.getKeypoint(pose, 'right_ankle');
         angles.rightKnee = this.calculateAngle(rightHip, rightKnee, rightAnkle);
-
-        const leftAnkle = this.getKeypoint(pose, 'left_ankle');
         angles.leftKnee = this.calculateAngle(leftHip, leftKnee, leftAnkle);
+
+        // Calculate wrist angles (relative to elbow)
+        if (rightElbow && rightWrist) {
+            angles.rightWrist = Math.atan2(rightWrist.y - rightElbow.y, rightWrist.x - rightElbow.x) * 180 / Math.PI;
+        }
+        if (leftElbow && leftWrist) {
+            angles.leftWrist = Math.atan2(leftWrist.y - leftElbow.y, leftWrist.x - leftElbow.x) * 180 / Math.PI;
+        }
 
         return angles;
     }
@@ -136,41 +142,39 @@ class PoseDetector {
 
     calculateFaceMetrics(pose) {
         const metrics = {};
+        
         // Face keypoints
+        const nose = this.getKeypoint(pose, 'nose');
         const leftEye = this.getKeypoint(pose, 'left_eye');
         const rightEye = this.getKeypoint(pose, 'right_eye');
         const leftEar = this.getKeypoint(pose, 'left_ear');
         const rightEar = this.getKeypoint(pose, 'right_ear');
-        const nose = this.getKeypoint(pose, 'nose');
 
-        // Eye measurements
         if (leftEye && rightEye) {
-            const dx = rightEye.x - leftEye.x;
-            const dy = rightEye.y - leftEye.y;
-            metrics.eyeDistance = Math.sqrt(dx * dx + dy * dy);
-            // Eye level (tilt)
-            metrics.eyeTilt = Math.atan2(rightEye.y - leftEye.y, rightEye.x - leftEye.x) * 180 / Math.PI;
+            // Eye measurements
+            const eyeDx = rightEye.x - leftEye.x;
+            const eyeDy = rightEye.y - leftEye.y;
+            metrics.eyeDistance = Math.sqrt(eyeDx * eyeDx + eyeDy * eyeDy);
+            metrics.eyeTilt = Math.atan2(eyeDy, eyeDx) * 180 / Math.PI;
         }
 
-        // Head rotation estimation (using ear-to-ear distance)
-        if (leftEar && rightEar) {
+        if (leftEar && rightEar && metrics.eyeDistance) {
+            // Head rotation (using ear-to-ear vs eye-to-eye ratio)
             const earDist = Math.sqrt(
                 Math.pow(rightEar.x - leftEar.x, 2) + 
                 Math.pow(rightEar.y - leftEar.y, 2)
             );
-            metrics.headRotation = earDist / metrics.eyeDistance; // Ratio indicates head rotation
+            metrics.headRotation = earDist / metrics.eyeDistance;
         }
 
-        // Head tilt (using nose position relative to eye midpoint)
         if (nose && leftEye && rightEye) {
+            // Head position relative to eyes
             const eyeMidX = (leftEye.x + rightEye.x) / 2;
             const eyeMidY = (leftEye.y + rightEye.y) / 2;
             metrics.headTilt = Math.atan2(nose.y - eyeMidY, nose.x - eyeMidX) * 180 / Math.PI;
-        }
-
-        // Face direction (forward/side using ear visibility)
-        if (leftEar && rightEar) {
-            metrics.faceDirection = (leftEar.score + rightEar.score) / 2; // Higher score = more forward facing
+            
+            // Head forward/backward tilt
+            metrics.headForwardTilt = nose.y - eyeMidY;
         }
 
         return metrics;
@@ -179,27 +183,32 @@ class PoseDetector {
     calculatePosture(pose) {
         const posture = {};
         
-        // Spine alignment (using shoulders and hips)
         const rightShoulder = this.getKeypoint(pose, 'right_shoulder');
         const leftShoulder = this.getKeypoint(pose, 'left_shoulder');
         const rightHip = this.getKeypoint(pose, 'right_hip');
         const leftHip = this.getKeypoint(pose, 'left_hip');
         
         if (rightShoulder && leftShoulder && rightHip && leftHip) {
-            // Calculate shoulder midpoint
+            // Shoulder midpoint
             const shoulderMidX = (rightShoulder.x + leftShoulder.x) / 2;
             const shoulderMidY = (rightShoulder.y + leftShoulder.y) / 2;
             
-            // Calculate hip midpoint
+            // Hip midpoint
             const hipMidX = (rightHip.x + leftHip.x) / 2;
             const hipMidY = (rightHip.y + leftHip.y) / 2;
             
-            // Calculate spine angle relative to vertical
+            // Spine angle (vertical alignment)
             posture.spineAngle = Math.atan2(shoulderMidX - hipMidX, hipMidY - shoulderMidY) * 180 / Math.PI;
             
-            // Calculate shoulder level
+            // Shoulder levelness
             posture.shoulderLevel = Math.atan2(rightShoulder.y - leftShoulder.y, 
                                              rightShoulder.x - leftShoulder.x) * 180 / Math.PI;
+            
+            // Body symmetry (difference between right and left side angles)
+            posture.symmetry = Math.abs(
+                Math.atan2(rightShoulder.y - rightHip.y, rightShoulder.x - rightHip.x) -
+                Math.atan2(leftShoulder.y - leftHip.y, leftShoulder.x - leftHip.x)
+            ) * 180 / Math.PI;
         }
         
         return posture;
