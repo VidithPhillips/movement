@@ -95,7 +95,6 @@ class PoseVisualizer3D {
     }
 
     createBodyPart(width, height, depth, isSphere = false, material) {
-        // Only declare geometry since material is passed as parameter
         let geometry;
         
         if (isSphere) {

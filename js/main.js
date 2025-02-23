@@ -126,34 +126,29 @@ class MovementAnalysisApp {
 // Start the application when the page loads
 window.onload = async () => {
     try {
-        // Check dependencies
-        const dependencies = {
-            'THREE.js': typeof THREE !== 'undefined',
-            'PoseVisualizer3D': typeof PoseVisualizer3D !== 'undefined',
-            'MovementAnalyzer': typeof MovementAnalyzer !== 'undefined'
-        };
+        // Debug logging
+        console.log('Initialization start');
+        console.log('THREE loaded:', typeof THREE !== 'undefined');
+        console.log('PoseVisualizer3D loaded:', typeof PoseVisualizer3D !== 'undefined');
+        console.log('MovementAnalyzer loaded:', typeof MovementAnalyzer !== 'undefined');
 
-        console.log('Checking dependencies:', dependencies);
-
-        // Check if any dependencies are missing
-        const missingDeps = Object.entries(dependencies)
-            .filter(([, loaded]) => !loaded)
-            .map(([name]) => name);
-
-        if (missingDeps.length > 0) {
-            throw new Error(`Missing dependencies: ${missingDeps.join(', ')}`);
-        }
-
+        // Check DOM elements
         const video = document.getElementById('video');
         const canvas = document.getElementById('output');
-        
+        console.log('Video element:', video);
+        console.log('Canvas element:', canvas);
+
         if (!video || !canvas) {
             throw new Error('Required video or canvas element not found');
         }
 
         // Initialize pose detection
+        console.log('Initializing MediaPipePose...');
         window.poseDetector = new MediaPipePose(video, canvas);
+        console.log('MediaPipePose initialized');
+        
         await window.poseDetector.start();
+        console.log('Pose detection started');
 
     } catch (error) {
         console.error('Initialization failed:', error);
