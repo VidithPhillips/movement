@@ -125,10 +125,31 @@ class MovementAnalysisApp {
 
 // Start the application when the page loads
 window.onload = async () => {
-    const video = document.getElementById('video');
-    const canvas = document.getElementById('output');
-    
-    // Create and start MediaPipe pose detection.
-    const mpPose = new MediaPipePose(video, canvas);
-    await mpPose.start();
+    try {
+        const video = document.getElementById('video');
+        const canvas = document.getElementById('output');
+        
+        // Ensure elements exist
+        if (!video || !canvas) {
+            throw new Error('Required video or canvas element not found');
+        }
+
+        // Initialize pose detection
+        window.poseDetector = new MediaPipePose(video, canvas);
+        await window.poseDetector.start();
+
+    } catch (error) {
+        console.error('Initialization failed:', error);
+        document.getElementById('loading').innerHTML = `
+            <div class="loading-error">
+                Failed to initialize: ${error.message}
+            </div>`;
+    }
+};
+
+// Clean up on page unload
+window.onbeforeunload = () => {
+    if (window.poseDetector) {
+        window.poseDetector.stop();
+    }
 }; 
