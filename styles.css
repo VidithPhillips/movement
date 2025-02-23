@@ -112,7 +112,7 @@ body {
 .metric-grid {
     display: grid;
     grid-template-columns: repeat(2, 1fr);
-    gap: 10px;
+    gap: 8px;
 }
 
 .metric-value {
@@ -314,4 +314,34 @@ body {
 
 .success {
     color: #4caf50;
+}
+
+.value.excellent {
+    color: #4caf50;
+}
+
+.value.good {
+    color: #8bc34a;
+}
+
+.value.fair {
+    color: #ffc107;
+}
+
+.value.poor {
+    color: #f44336;
+}
+
+.metric-box {
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 8px;
+    padding: 16px;
+    margin-bottom: 16px;
+}
+
+.metric-box h3 {
+    margin: 0 0 12px 0;
+    color: #fff;
+    font-size: 16px;
+    font-weight: 500;
 } 
