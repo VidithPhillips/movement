@@ -13,17 +13,15 @@ class MovementAnalyzer {
             spine: []
         };
         
-        // Configure history length for tracking
         this.historyLength = 30; // 1 second at 30fps
     }
 
     setupMetrics() {
         this.metrics = {
-            jointAngles: {},
-            posture: {},
-            symmetry: {},
-            stability: {},
-            rangeOfMotion: {}
+            sagittalPlane: {},
+            frontalPlane: {},
+            functional: {},
+            quality: {}
         };
         
         this.createMetricsDisplay();
@@ -38,12 +36,16 @@ class MovementAnalyzer {
     createMetricsDisplay() {
         this.container.innerHTML = `
             <div class="metric-box">
-                <h3>Joint Angles</h3>
-                <div id="angles" class="metric-grid"></div>
+                <h3>Sagittal Plane (Side View)</h3>
+                <div id="sagittal" class="metric-grid"></div>
             </div>
             <div class="metric-box">
-                <h3>Posture Analysis</h3>
-                <div id="posture" class="metric-grid"></div>
+                <h3>Frontal Plane (Front View)</h3>
+                <div id="frontal" class="metric-grid"></div>
+            </div>
+            <div class="metric-box">
+                <h3>Functional Movement</h3>
+                <div id="functional" class="metric-grid"></div>
             </div>
             <div class="metric-box">
                 <h3>Movement Quality</h3>
@@ -55,74 +57,80 @@ class MovementAnalyzer {
     updateMetrics(landmarks) {
         if (!landmarks) return;
 
-        // Calculate joint angles
-        this.metrics.jointAngles = {
-            // Sagittal Plane (side view) angles
+        // Sagittal Plane Measurements
+        this.metrics.sagittalPlane = {
             trunkFlexion: {
-                value: this.calculateAngle(landmarks[11], landmarks[23], landmarks[25]), // shoulder-hip-knee
+                value: this.calculateAngle(landmarks[11], landmarks[23], landmarks[25]),
                 description: "Forward/backward lean",
-                normal: "0-15°"
+                normal: "0-15°",
+                direction: value => value > 7.5 ? "Forward lean" : "Neutral/Back",
+                clinical: "Indicates postural alignment in standing"
             },
             neckFlexion: {
-                value: this.calculateAngle(landmarks[7], landmarks[0], landmarks[11]), // ear-nose-shoulder
+                value: this.calculateAngle(landmarks[7], landmarks[0], landmarks[11]),
                 description: "Head forward position",
-                normal: "0-15°"
-            },
-            
-            // Frontal Plane (front view) angles
-            lateralLean: {
-                value: this.calculateVerticalDeviation([landmarks[11], landmarks[23]]), // shoulder-hip vertical
-                description: "Side lean",
-                normal: "0-5°"
-            },
-            shoulderTilt: {
-                value: this.calculateHorizontalDeviation(landmarks[11], landmarks[12]),
-                description: "Shoulder levelness",
-                normal: "0-5°"
-            },
-
-            // Functional angles
-            kneeFlexion: {
-                left: {
-                    value: this.calculateAngle(landmarks[23], landmarks[25], landmarks[27]),
-                    description: "Left knee bend",
-                    normal: "0-140°"
-                },
-                right: {
-                    value: this.calculateAngle(landmarks[24], landmarks[26], landmarks[28]),
-                    description: "Right knee bend",
-                    normal: "0-140°"
-                }
+                normal: "0-35°",
+                direction: value => value > 45 ? "Forward head" : "Neutral",
+                clinical: "Forward head posture assessment"
             },
             hipFlexion: {
                 left: {
                     value: this.calculateAngle(landmarks[11], landmarks[23], landmarks[25]),
                     description: "Left hip bend",
-                    normal: "0-125°"
+                    normal: "0-125°",
+                    clinical: "Hip mobility and function"
                 },
                 right: {
                     value: this.calculateAngle(landmarks[12], landmarks[24], landmarks[26]),
                     description: "Right hip bend",
-                    normal: "0-125°"
+                    normal: "0-125°",
+                    clinical: "Hip mobility and function"
                 }
             }
         };
 
-        // Calculate posture metrics
-        this.metrics.posture = {
-            spineAlignment: this.calculateVerticalDeviation([
-                landmarks[0], landmarks[11], landmarks[23]
-            ]),
-            shoulderLevel: this.calculateHorizontalDeviation(
-                landmarks[11], landmarks[12]
-            ),
-            hipLevel: this.calculateHorizontalDeviation(
-                landmarks[23], landmarks[24]
-            )
+        // Frontal Plane Measurements
+        this.metrics.frontalPlane = {
+            shoulderTilt: {
+                value: this.calculateHorizontalDeviation(landmarks[11], landmarks[12]),
+                description: "Shoulder levelness",
+                normal: "0-5°",
+                clinical: "Shoulder girdle alignment"
+            },
+            pelvisTilt: {
+                value: this.calculateHorizontalDeviation(landmarks[23], landmarks[24]),
+                description: "Pelvic tilt",
+                normal: "0-5°",
+                clinical: "Pelvic alignment assessment"
+            },
+            lateralLean: {
+                value: this.calculateVerticalDeviation([landmarks[11], landmarks[23]]),
+                description: "Side lean",
+                normal: "0-5°",
+                clinical: "Lateral postural alignment"
+            }
         };
 
-        // Update movement quality metrics
-        this.updateMovementQuality();
+        // Functional Measurements
+        this.metrics.functional = {
+            kneeFlexion: {
+                left: {
+                    value: this.calculateAngle(landmarks[23], landmarks[25], landmarks[27]),
+                    description: "Left knee mobility",
+                    normal: "0-140°",
+                    clinical: "Knee function during movement"
+                },
+                right: {
+                    value: this.calculateAngle(landmarks[24], landmarks[26], landmarks[28]),
+                    description: "Right knee mobility",
+                    normal: "0-140°",
+                    clinical: "Knee function during movement"
+                }
+            }
+        };
+
+        // Update quality metrics
+        this.updateMovementQuality(landmarks);
         
         // Update display
         this.updateDisplay();
@@ -160,25 +168,25 @@ class MovementAnalyzer {
         return Math.max(0, 100 - (dy * 200));
     }
 
-    updateMovementQuality() {
+    updateMovementQuality(landmarks) {
         // Calculate symmetry
-        this.metrics.symmetry = {
+        this.metrics.quality.symmetry = {
             arms: this.calculateSymmetry(
-                this.metrics.jointAngles.leftShoulder,
-                this.metrics.jointAngles.rightShoulder,
-                this.metrics.jointAngles.leftElbow,
-                this.metrics.jointAngles.rightElbow
+                this.metrics.sagittalPlane.leftShoulder,
+                this.metrics.sagittalPlane.rightShoulder,
+                this.metrics.sagittalPlane.leftElbow,
+                this.metrics.sagittalPlane.rightElbow
             ),
             legs: this.calculateSymmetry(
-                this.metrics.jointAngles.leftHip,
-                this.metrics.jointAngles.rightHip,
-                this.metrics.jointAngles.leftKnee,
-                this.metrics.jointAngles.rightKnee
+                this.metrics.sagittalPlane.leftHip,
+                this.metrics.sagittalPlane.rightHip,
+                this.metrics.sagittalPlane.leftKnee,
+                this.metrics.sagittalPlane.rightKnee
             )
         };
         
         // Update range of motion tracking
-        this.updateRangeOfMotion();
+        this.updateRangeOfMotion(landmarks);
     }
 
     calculateSymmetry(leftUpper, rightUpper, leftLower, rightLower) {
@@ -187,16 +195,16 @@ class MovementAnalyzer {
         return Math.max(0, 100 - ((upperDiff + lowerDiff) / 2));
     }
 
-    updateRangeOfMotion() {
+    updateRangeOfMotion(landmarks) {
         // Update angle histories
-        this.updateAngleHistory('leftShoulder', this.metrics.jointAngles.leftShoulder);
-        this.updateAngleHistory('rightShoulder', this.metrics.jointAngles.rightShoulder);
-        this.updateAngleHistory('leftHip', this.metrics.jointAngles.leftHip);
-        this.updateAngleHistory('rightHip', this.metrics.jointAngles.rightHip);
-        this.updateAngleHistory('spine', this.metrics.jointAngles.spine);
+        this.updateAngleHistory('leftShoulder', this.metrics.sagittalPlane.leftShoulder);
+        this.updateAngleHistory('rightShoulder', this.metrics.sagittalPlane.rightShoulder);
+        this.updateAngleHistory('leftHip', this.metrics.sagittalPlane.leftHip);
+        this.updateAngleHistory('rightHip', this.metrics.sagittalPlane.rightHip);
+        this.updateAngleHistory('spine', this.metrics.sagittalPlane.spine);
 
         // Calculate range of motion
-        this.metrics.rangeOfMotion = {
+        this.metrics.quality.rangeOfMotion = {
             leftArm: this.calculateROM('leftShoulder'),
             rightArm: this.calculateROM('rightShoulder'),
             leftLeg: this.calculateROM('leftHip'),
@@ -224,90 +232,94 @@ class MovementAnalyzer {
     }
 
     updateDisplay() {
-        // Update angles display
-        const anglesDiv = this.container.querySelector('#angles');
-        anglesDiv.innerHTML = Object.entries(this.metrics.jointAngles)
-            .map(([joint, data]) => {
-                if (data.left && data.right) {
-                    // Handle bilateral measurements
-                    return `
-                        <div class="metric-group">
-                            <div class="metric-header">${this.formatJointName(joint)}</div>
-                            <div class="metric-value">
-                                <span class="label">Left: ${data.left.value}° (${data.left.normal})</span>
-                                <span class="description">${data.left.description}</span>
-                            </div>
-                            <div class="metric-value">
-                                <span class="label">Right: ${data.right.value}° (${data.right.normal})</span>
-                                <span class="description">${data.right.description}</span>
-                            </div>
-                        </div>
-                    `;
-                } else {
-                    // Handle single measurements
-                    return `
-                        <div class="metric-value">
-                            <div class="metric-header">
-                                <span class="label">${this.formatJointName(joint)}</span>
-                                <span class="normal-range">${data.normal}</span>
-                            </div>
-                            <div class="value ${this.getValueClass(data.value)}">
-                                ${Math.round(data.value)}°
-                            </div>
-                            <div class="description">${data.description}</div>
-                        </div>
-                    `;
-                }
-            }).join('');
+        // Update sagittal plane metrics
+        const sagittalDiv = this.container.querySelector('#sagittal');
+        sagittalDiv.innerHTML = this.generateMetricsHTML(this.metrics.sagittalPlane, 'sagittal');
 
-        // Update posture metrics
-        const postureDiv = this.container.querySelector('#posture');
-        postureDiv.innerHTML = Object.entries(this.metrics.posture)
-            .map(([metric, value]) => `
-                <div class="metric-value">
-                    <span class="label">${this.formatMetricName(metric)}:</span>
-                    <span class="value ${this.getValueClass(value)}">
-                        ${Math.round(value)}%
-                    </span>
-                </div>
-            `).join('');
+        // Update frontal plane metrics
+        const frontalDiv = this.container.querySelector('#frontal');
+        frontalDiv.innerHTML = this.generateMetricsHTML(this.metrics.frontalPlane, 'frontal');
+
+        // Update functional metrics
+        const functionalDiv = this.container.querySelector('#functional');
+        functionalDiv.innerHTML = this.generateMetricsHTML(this.metrics.functional, 'functional');
 
         // Update quality metrics
         const qualityDiv = this.container.querySelector('#quality');
-        qualityDiv.innerHTML = `
+        qualityDiv.innerHTML = this.generateQualityHTML(this.metrics.quality);
+    }
+
+    generateMetricsHTML(metrics, plane) {
+        return Object.entries(metrics)
+            .map(([name, data]) => {
+                if (data.left && data.right) {
+                    return this.generateBilateralMetricHTML(name, data);
+                }
+                return this.generateSingleMetricHTML(name, data, plane);
+            }).join('');
+    }
+
+    generateSingleMetricHTML(name, data, plane) {
+        const direction = data.direction ? data.direction(data.value) : '';
+        return `
             <div class="metric-value">
-                <span class="label">Arm Symmetry:</span>
-                <span class="value ${this.getValueClass(this.metrics.symmetry.arms)}">
-                    ${Math.round(this.metrics.symmetry.arms)}%
-                </span>
+                <div class="metric-header">
+                    <span class="plane-indicator">${this.formatPlaneName(plane)}</span>
+                    <span class="label">${this.formatMetricName(name)}</span>
+                </div>
+                <div class="value-container">
+                    <span class="value ${this.getValueClass(data.value, data.normal)}">
+                        ${Math.round(data.value)}°
+                    </span>
+                    <span class="direction">${direction}</span>
+                    <span class="normal-range">Normal: ${data.normal}</span>
+                </div>
+                <div class="description">${data.description}</div>
+                <div class="clinical-note">${data.clinical}</div>
             </div>
-            <div class="metric-value">
-                <span class="label">Leg Symmetry:</span>
-                <span class="value ${this.getValueClass(this.metrics.symmetry.legs)}">
-                    ${Math.round(this.metrics.symmetry.legs)}%
-                </span>
-            </div>
-            ${Object.entries(this.metrics.rangeOfMotion)
-                .map(([part, range]) => `
-                    <div class="metric-value">
-                        <span class="label">${this.formatJointName(part)} ROM:</span>
-                        <span class="value">${range}°</span>
-                    </div>
-                `).join('')}
         `;
     }
 
-    getValueClass(value) {
-        if (value >= 90) return 'excellent';
-        if (value >= 75) return 'good';
-        if (value >= 60) return 'fair';
-        return 'poor';
+    generateBilateralMetricHTML(name, data) {
+        return `
+            <div class="metric-group">
+                <div class="metric-header bilateral">
+                    <span class="label">${this.formatMetricName(name)}</span>
+                    <span class="normal-range">Normal: ${data.left.normal}</span>
+                </div>
+                <div class="bilateral-container">
+                    <div class="side-value">
+                        <span class="side-label">Left</span>
+                        <span class="value ${this.getValueClass(data.left.value, data.left.normal)}">
+                            ${Math.round(data.left.value)}°
+                        </span>
+                    </div>
+                    <div class="side-value">
+                        <span class="side-label">Right</span>
+                        <span class="value ${this.getValueClass(data.right.value, data.right.normal)}">
+                            ${Math.round(data.right.value)}°
+                        </span>
+                    </div>
+                </div>
+                <div class="clinical-note">${data.left.clinical}</div>
+            </div>
+        `;
     }
 
-    formatJointName(name) {
-        return name
-            .replace(/([A-Z])/g, ' $1')
-            .replace(/^./, str => str.toUpperCase());
+    formatPlaneName(plane) {
+        const planes = {
+            sagittal: 'Side View',
+            frontal: 'Front View',
+            functional: 'Movement'
+        };
+        return planes[plane] || plane;
+    }
+
+    getValueClass(value, normalRange) {
+        if (!normalRange) return '';
+        const [min, max] = normalRange.split('-').map(n => parseInt(n));
+        if (value >= min && value <= max) return 'normal';
+        return value < min ? 'below' : 'above';
     }
 
     formatMetricName(name) {
