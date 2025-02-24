@@ -50,13 +50,10 @@ class MovementAnalyzer {
 
     setupMetrics() {
         this.metrics = {
-            sagittalPlane: {},
-            frontalPlane: {},
-            functional: {},
-            quality: {}
+            upperBody: {},
+            core: {},
+            lowerBody: {}
         };
-        
-        this.createMetricsDisplay();
     }
 
     setupEventListeners() {
@@ -65,78 +62,26 @@ class MovementAnalyzer {
         });
     }
 
-    createMetricsDisplay() {
-        this.container.innerHTML = `
-            <div class="metric-box">
-                <h3>Sagittal Plane (Side View)</h3>
-                <div id="sagittal" class="metric-grid"></div>
-            </div>
-            <div class="metric-box">
-                <h3>Frontal Plane (Front View)</h3>
-                <div id="frontal" class="metric-grid"></div>
-            </div>
-            <div class="metric-box">
-                <h3>Functional Movement</h3>
-                <div id="functional" class="metric-grid"></div>
-            </div>
-            <div class="metric-box">
-                <h3>Movement Quality</h3>
-                <div id="quality" class="metric-grid"></div>
-            </div>
-        `;
-    }
-
     updateMetrics(landmarks) {
         if (!landmarks) return;
 
         // Always update distance gauge
         this.updateDistanceGauge(landmarks);
 
-        // Calculate confidence for each body segment
-        const confidence = {
-            upper: this.calculateSegmentConfidence(landmarks, [0, 11, 12, 13, 14, 15, 16]),
-            core: this.calculateSegmentConfidence(landmarks, [11, 12, 23, 24]),
-            lower: this.calculateSegmentConfidence(landmarks, [23, 24, 25, 26, 27, 28])
-        };
-
-        let metrics = {};
-
-        // Upper Body Metrics
-        if (confidence.upper.isValid) {
-            metrics.upperBody = {
+        // Calculate metrics
+        const metrics = {
+            upperBody: {
                 shoulderAngle: {
                     left: this.calculateAngle(landmarks[13], landmarks[11], landmarks[23]),
                     right: this.calculateAngle(landmarks[14], landmarks[12], landmarks[24])
                 },
-                neckTilt: this.calculateAngle(landmarks[7], landmarks[0], landmarks[11]),
-                shoulderLevel: this.calculateHorizontalDeviation(landmarks[11], landmarks[12]),
-                elbowAngle: {
-                    left: this.calculateAngle(landmarks[11], landmarks[13], landmarks[15]),
-                    right: this.calculateAngle(landmarks[12], landmarks[14], landmarks[16])
-                },
-                shoulderProtraction: {
-                    left: this.calculateDepth(landmarks[11], landmarks[13]),
-                    right: this.calculateDepth(landmarks[12], landmarks[14])
-                }
-            };
-        }
-
-        // Core Metrics
-        if (confidence.core.isValid) {
-            metrics.core = {
+                neckTilt: this.calculateAngle(landmarks[7], landmarks[0], landmarks[11])
+            },
+            core: {
                 spineAngle: this.calculateAngle(landmarks[0], landmarks[11], landmarks[23]),
-                trunkLean: this.calculateVerticalDeviation([landmarks[11], landmarks[23]]),
-                pelvisLevel: this.calculateHorizontalDeviation(landmarks[23], landmarks[24]),
-                torsoRotation: this.calculateRotation(
-                    [landmarks[11], landmarks[12]], // shoulders
-                    [landmarks[23], landmarks[24]]  // hips
-                )
-            };
-        }
-
-        // Lower Body Metrics
-        if (confidence.lower.isValid) {
-            metrics.lowerBody = {
+                trunkLean: this.calculateVerticalDeviation([landmarks[11], landmarks[23]])
+            },
+            lowerBody: {
                 kneeAngle: {
                     left: this.calculateAngle(landmarks[23], landmarks[25], landmarks[27]),
                     right: this.calculateAngle(landmarks[24], landmarks[26], landmarks[28])
@@ -144,138 +89,78 @@ class MovementAnalyzer {
                 hipAngle: {
                     left: this.calculateAngle(landmarks[11], landmarks[23], landmarks[25]),
                     right: this.calculateAngle(landmarks[12], landmarks[24], landmarks[26])
-                },
-                ankleAngle: {
-                    left: this.calculateAngle(landmarks[25], landmarks[27], landmarks[31]),
-                    right: this.calculateAngle(landmarks[26], landmarks[28], landmarks[32])
-                },
-                kneeAlignment: {
-                    left: this.calculateAlignment(landmarks[23], landmarks[25], landmarks[27]),
-                    right: this.calculateAlignment(landmarks[24], landmarks[26], landmarks[28])
-                }
-            };
-        }
-
-        // Add movement quality metrics
-        metrics.quality = {
-            symmetry: {
-                shoulders: this.calculateSymmetry(metrics.upperBody?.shoulderAngle),
-                hips: this.calculateSymmetry(metrics.lowerBody?.hipAngle),
-                knees: this.calculateSymmetry(metrics.lowerBody?.kneeAngle)
-            },
-            stability: this.calculatePosturalStability(landmarks),
-            balance: this.calculateBalanceScore(landmarks)
-        };
-
-        this.updateDisplay(metrics, confidence);
-    }
-
-    calculateSegmentConfidence(landmarks, indices) {
-        const visibilities = indices.map(i => landmarks[i]?.visibility || 0);
-        const avgVisibility = visibilities.reduce((a, b) => a + b, 0) / visibilities.length;
-        return {
-            isValid: avgVisibility > 0.5,
-            value: avgVisibility
-        };
-    }
-
-    updateDisplay(metrics, confidence) {
-        // Create sections for each body part
-        const sections = {
-            upperBody: {
-                title: 'Upper Body',
-                metrics: {
-                    shoulderAngle: { label: 'Shoulder Angle', unit: '°', bilateral: true },
-                    elbowAngle: { label: 'Elbow Angle', unit: '°', bilateral: true },
-                    neckTilt: { label: 'Neck Tilt', unit: '°' },
-                    shoulderLevel: { label: 'Shoulder Level', unit: '%' }
-                }
-            },
-            core: {
-                title: 'Core',
-                metrics: {
-                    spineAngle: { label: 'Spine Angle', unit: '°' },
-                    trunkLean: { label: 'Trunk Lean', unit: '°' },
-                    pelvisLevel: { label: 'Pelvis Level', unit: '%' },
-                    torsoRotation: { label: 'Torso Rotation', unit: '°' }
-                }
-            },
-            lowerBody: {
-                title: 'Lower Body',
-                metrics: {
-                    kneeAngle: { label: 'Knee Angle', unit: '°', bilateral: true },
-                    hipAngle: { label: 'Hip Angle', unit: '°', bilateral: true },
-                    ankleAngle: { label: 'Ankle Angle', unit: '°', bilateral: true }
-                }
-            },
-            quality: {
-                title: 'Movement Quality',
-                metrics: {
-                    symmetry: {
-                        shoulders: { label: 'Shoulder Symmetry', unit: '%' },
-                        hips: { label: 'Hip Symmetry', unit: '%' },
-                        knees: { label: 'Knee Symmetry', unit: '%' }
-                    },
-                    stability: { label: 'Postural Stability', unit: '%' },
-                    balance: { label: 'Balance Score', unit: '%' }
                 }
             }
         };
 
+        // Update display
+        this.updateDisplay(metrics);
+    }
+
+    updateDisplay(metrics) {
         let html = '';
-        
-        // Generate HTML for each section
-        Object.entries(sections).forEach(([section, data]) => {
-            if (metrics[section]) {
-                html += `
-                    <div class="metric-box">
-                        <h3>${data.title}</h3>
-                        <div class="metric-grid">
-                            ${this.generateSectionMetrics(metrics[section], data.metrics)}
-                        </div>
-                    </div>
-                `;
-            }
-        });
 
-        this.container.innerHTML = html || '<div class="metric-box">Adjusting camera view...</div>';
-    }
-
-    generateSectionMetrics(values, metricDefs) {
-        return Object.entries(metricDefs).map(([key, def]) => {
-            const value = values[key];
-            
-            if (def.bilateral) {
-                return `
+        // Upper Body
+        html += `
+            <div class="metric-box">
+                <h3>Upper Body</h3>
+                <div class="metric-grid">
                     <div class="metric-value">
-                        <div class="metric-header">${def.label}</div>
+                        <div class="metric-header">Shoulder Angle</div>
                         <div class="bilateral-values">
-                            <span>L: ${Math.round(value.left)}${def.unit}</span>
-                            <span>R: ${Math.round(value.right)}${def.unit}</span>
+                            <span>L: ${Math.round(metrics.upperBody.shoulderAngle.left)}°</span>
+                            <span>R: ${Math.round(metrics.upperBody.shoulderAngle.right)}°</span>
                         </div>
                     </div>
-                `;
-            } else if (typeof value === 'object' && !def.bilateral) {
-                // Handle nested metrics (like symmetry)
-                return Object.entries(value).map(([subKey, subValue]) => `
                     <div class="metric-value">
-                        <div class="metric-header">${metricDefs[key][subKey].label}</div>
-                        <div class="value">
-                            ${Math.round(subValue)}${metricDefs[key][subKey].unit}
-                        </div>
+                        <div class="metric-header">Neck Tilt</div>
+                        <div class="value">${Math.round(metrics.upperBody.neckTilt)}°</div>
                     </div>
-                `).join('');
-            } else {
-                return `
+                </div>
+            </div>
+        `;
+
+        // Core
+        html += `
+            <div class="metric-box">
+                <h3>Core</h3>
+                <div class="metric-grid">
                     <div class="metric-value">
-                        <div class="metric-header">${def.label}</div>
-                        <div class="value">
-                            ${Math.round(value)}${def.unit}
+                        <div class="metric-header">Spine Angle</div>
+                        <div class="value">${Math.round(metrics.core.spineAngle)}°</div>
+                    </div>
+                    <div class="metric-value">
+                        <div class="metric-header">Trunk Lean</div>
+                        <div class="value">${Math.round(metrics.core.trunkLean)}°</div>
+                    </div>
+                </div>
+            </div>
+        `;
+
+        // Lower Body
+        html += `
+            <div class="metric-box">
+                <h3>Lower Body</h3>
+                <div class="metric-grid">
+                    <div class="metric-value">
+                        <div class="metric-header">Knee Angle</div>
+                        <div class="bilateral-values">
+                            <span>L: ${Math.round(metrics.lowerBody.kneeAngle.left)}°</span>
+                            <span>R: ${Math.round(metrics.lowerBody.kneeAngle.right)}°</span>
                         </div>
                     </div>
-                `;
-            }
-        }).join('');
+                    <div class="metric-value">
+                        <div class="metric-header">Hip Angle</div>
+                        <div class="bilateral-values">
+                            <span>L: ${Math.round(metrics.lowerBody.hipAngle.left)}°</span>
+                            <span>R: ${Math.round(metrics.lowerBody.hipAngle.right)}°</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `;
+
+        this.container.innerHTML = html;
     }
 
     calculateAngle(a, b, c) {

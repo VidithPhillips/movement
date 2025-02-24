@@ -43,15 +43,7 @@ class MovementAnalysis {
 
 // Start when page loads
 document.addEventListener('DOMContentLoaded', () => {
-    const video = document.getElementById('video');
-    const canvas = document.getElementById('output');
-    
-    // Initialize movement analyzer
-    const analyzer = new MovementAnalyzer('movement-metrics');
-    
-    // Initialize pose detection
-    const pose = new MediaPipePose(video, canvas);
-    pose.start();
+    new MovementAnalysis();
 });
 
 class MovementAnalysisApp {
