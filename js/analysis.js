@@ -29,35 +29,18 @@ class MovementAnalyzer {
     updateMetrics(landmarks) {
         if (!landmarks) return;
         
+        // Calculate metrics
         const metrics = {
             upperBody: {
                 shoulderAngle: {
                     left: this.calculateAngle(landmarks[13], landmarks[11], landmarks[23]),
                     right: this.calculateAngle(landmarks[14], landmarks[12], landmarks[24])
                 },
-                neckTilt: this.calculateAngle(landmarks[7], landmarks[0], landmarks[11]),
-                elbowAngle: {
-                    left: this.calculateAngle(landmarks[11], landmarks[13], landmarks[15]),
-                    right: this.calculateAngle(landmarks[12], landmarks[14], landmarks[16])
-                },
-                wristAngle: {
-                    left: this.calculateAngle(landmarks[13], landmarks[15], landmarks[17]),
-                    right: this.calculateAngle(landmarks[14], landmarks[16], landmarks[18])
-                },
-                shoulderRotation: {
-                    left: this.calculateRotation([landmarks[11], landmarks[13]]),
-                    right: this.calculateRotation([landmarks[12], landmarks[14]])
-                }
+                neckTilt: this.calculateAngle(landmarks[7], landmarks[0], landmarks[11])
             },
             core: {
                 spineAngle: this.calculateAngle(landmarks[0], landmarks[11], landmarks[23]),
-                trunkLean: this.calculateVerticalDeviation([landmarks[11], landmarks[23]]),
-                pelvisAngle: this.calculateAngle(landmarks[23], landmarks[24], landmarks[26]),
-                torsoRotation: this.calculateRotation(
-                    [landmarks[11], landmarks[12]],
-                    [landmarks[23], landmarks[24]]
-                ),
-                lateralBend: this.calculateAngle(landmarks[11], landmarks[23], landmarks[24])
+                trunkLean: this.calculateVerticalDeviation([landmarks[11], landmarks[23]])
             },
             lowerBody: {
                 kneeAngle: {
@@ -67,18 +50,6 @@ class MovementAnalyzer {
                 hipAngle: {
                     left: this.calculateAngle(landmarks[11], landmarks[23], landmarks[25]),
                     right: this.calculateAngle(landmarks[12], landmarks[24], landmarks[26])
-                },
-                ankleAngle: {
-                    left: this.calculateAngle(landmarks[25], landmarks[27], landmarks[31]),
-                    right: this.calculateAngle(landmarks[26], landmarks[28], landmarks[32])
-                },
-                hipRotation: {
-                    left: this.calculateRotation([landmarks[23], landmarks[25]]),
-                    right: this.calculateRotation([landmarks[24], landmarks[26]])
-                },
-                kneeAlignment: {
-                    left: this.calculateAlignment(landmarks[23], landmarks[25], landmarks[27]),
-                    right: this.calculateAlignment(landmarks[24], landmarks[26], landmarks[28])
                 }
             }
         };
@@ -102,20 +73,6 @@ class MovementAnalyzer {
                         </div>
                     </div>
                     <div class="metric-value">
-                        <div class="metric-header">Elbow Angle</div>
-                        <div class="bilateral-values">
-                            <span>L: ${Math.round(metrics.upperBody.elbowAngle.left)}°</span>
-                            <span>R: ${Math.round(metrics.upperBody.elbowAngle.right)}°</span>
-                        </div>
-                    </div>
-                    <div class="metric-value">
-                        <div class="metric-header">Wrist Angle</div>
-                        <div class="bilateral-values">
-                            <span>L: ${Math.round(metrics.upperBody.wristAngle.left)}°</span>
-                            <span>R: ${Math.round(metrics.upperBody.wristAngle.right)}°</span>
-                        </div>
-                    </div>
-                    <div class="metric-value">
                         <div class="metric-header">Neck Tilt</div>
                         <div class="value">${Math.round(metrics.upperBody.neckTilt)}°</div>
                     </div>
@@ -135,14 +92,6 @@ class MovementAnalyzer {
                     <div class="metric-value">
                         <div class="metric-header">Trunk Lean</div>
                         <div class="value">${Math.round(metrics.core.trunkLean)}°</div>
-                    </div>
-                    <div class="metric-value">
-                        <div class="metric-header">Pelvis Angle</div>
-                        <div class="value">${Math.round(metrics.core.pelvisAngle)}°</div>
-                    </div>
-                    <div class="metric-value">
-                        <div class="metric-header">Torso Rotation</div>
-                        <div class="value">${Math.round(metrics.core.torsoRotation)}°</div>
                     </div>
                 </div>
             </div>
@@ -165,20 +114,6 @@ class MovementAnalyzer {
                         <div class="bilateral-values">
                             <span>L: ${Math.round(metrics.lowerBody.kneeAngle.left)}°</span>
                             <span>R: ${Math.round(metrics.lowerBody.kneeAngle.right)}°</span>
-                        </div>
-                    </div>
-                    <div class="metric-value">
-                        <div class="metric-header">Ankle Angle</div>
-                        <div class="bilateral-values">
-                            <span>L: ${Math.round(metrics.lowerBody.ankleAngle.left)}°</span>
-                            <span>R: ${Math.round(metrics.lowerBody.ankleAngle.right)}°</span>
-                        </div>
-                    </div>
-                    <div class="metric-value">
-                        <div class="metric-header">Hip Rotation</div>
-                        <div class="bilateral-values">
-                            <span>L: ${Math.round(metrics.lowerBody.hipRotation.left)}°</span>
-                            <span>R: ${Math.round(metrics.lowerBody.hipRotation.right)}°</span>
                         </div>
                     </div>
                 </div>
