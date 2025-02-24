@@ -1,5 +1,9 @@
 class MediaPipePose {
   constructor(videoElement, canvasElement) {
+    if (!videoElement || !canvasElement) {
+      throw new Error('Video or canvas element not provided');
+    }
+    
     this.video = videoElement;
     this.canvas = canvasElement;
     this.ctx = canvasElement.getContext('2d');
@@ -20,7 +24,7 @@ class MediaPipePose {
 
     // Add debug logging
     this.pose.onResults((results) => {
-      console.log('Pose detected:', results.poseLandmarks ? 'yes' : 'no');
+      console.log('Pose detection:', results.poseLandmarks ? 'success' : 'no landmarks');
       this.drawResults(results);
       if (results.poseLandmarks) {
         // Dispatch event with landmarks
@@ -32,16 +36,27 @@ class MediaPipePose {
   }
 
   async start() {
-    console.log('Starting camera...');
-    const camera = new Camera(this.video, {
-      onFrame: async () => {
-        await this.pose.send({image: this.video});
-      },
-      width: 640,
-      height: 480
-    });
-    await camera.start();
-    console.log('Camera started');
+    try {
+      console.log('Starting MediaPipe...');
+      this.camera = new Camera(this.video, {
+        onFrame: async () => {
+          await this.pose.send({image: this.video});
+        },
+        width: 640,
+        height: 480
+      });
+      await this.camera.start();
+      console.log('MediaPipe started successfully');
+    } catch (error) {
+      console.error('MediaPipe failed to start:', error);
+      throw error;
+    }
+  }
+
+  stop() {
+    if (this.camera) {
+      this.camera.stop();
+    }
   }
 
   drawResults(results) {

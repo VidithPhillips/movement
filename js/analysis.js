@@ -9,6 +9,7 @@ class MovementAnalyzer {
         
         this.setupMetrics();
         this.setupEventListeners();
+        console.log('MovementAnalyzer initialized');
     }
 
     setupMetrics() {
@@ -20,9 +21,14 @@ class MovementAnalyzer {
     }
 
     setupEventListeners() {
+        console.log('Setting up pose event listener...');
         window.addEventListener('pose-updated', (event) => {
             console.log('Received pose update');
-            this.updateMetrics(event.detail);
+            if (event.detail) {
+                this.updateMetrics(event.detail);
+            } else {
+                console.log('No landmark data in event');
+            }
         });
     }
 
