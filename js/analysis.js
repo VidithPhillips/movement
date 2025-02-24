@@ -1,58 +1,8 @@
 class MovementAnalyzer {
     constructor(containerId) {
-        console.log('Initializing MovementAnalyzer...');
         this.container = document.getElementById(containerId);
-        if (!this.container) {
-            console.error('Container not found:', containerId);
-            return;
-        }
-        
         this.setupMetrics();
         this.setupEventListeners();
-        console.log('MovementAnalyzer initialized');
-        
-        // Store historical data for range of motion
-        this.angleHistory = {
-            leftShoulder: [],
-            rightShoulder: [],
-            leftHip: [],
-            rightHip: [],
-            spine: []
-        };
-        
-        this.historyLength = 30; // 1 second at 30fps
-
-        // Add threshold configurations
-        this.thresholds = {
-            distance: {
-                min: 0.3, // Normalized shoulder width when too close
-                max: 0.5, // Normalized shoulder width when too far
-                optimal: 0.4 // Ideal normalized shoulder width
-            },
-            orientation: {
-                maxTilt: 30, // Maximum degrees of body tilt allowed
-                maxRotation: 45 // Maximum degrees of rotation allowed
-            },
-            confidence: {
-                min: 0.7 // Minimum confidence score for reliable measurements
-            }
-        }
-
-        // Initialize distance gauge after DOM is ready
-        requestAnimationFrame(() => {
-            this.distanceGauge = {
-                fill: document.querySelector('.gauge-fill'),
-                optimal: {
-                    min: 0.35,
-                    max: 0.45
-                }
-            };
-            
-            // Add error handling
-            if (!this.distanceGauge.fill) {
-                console.error('Distance gauge element not found');
-            }
-        });
     }
 
     setupMetrics() {
@@ -64,20 +14,13 @@ class MovementAnalyzer {
     }
 
     setupEventListeners() {
-        console.log('Setting up event listeners...');
         window.addEventListener('pose-updated', (event) => {
-            console.log('Pose update received:', event.detail ? 'with landmarks' : 'no landmarks');
             this.updateMetrics(event.detail);
         });
     }
 
     updateMetrics(landmarks) {
-        if (!landmarks) {
-            console.log('No landmarks received');
-            return;
-        }
-
-        console.log('Updating metrics...');
+        if (!landmarks) return;
         
         // Calculate metrics
         const metrics = {
@@ -104,7 +47,6 @@ class MovementAnalyzer {
             }
         };
 
-        console.log('Metrics calculated:', metrics);
         this.updateDisplay(metrics);
     }
 
