@@ -9,8 +9,9 @@ class MovementAnalysis {
         // Get DOM elements
         this.video = document.getElementById('video');
         this.canvas = document.getElementById('output');
+        this.metricsContainer = document.getElementById('movement-metrics');
         
-        if (!this.video || !this.canvas) {
+        if (!this.video || !this.canvas || !this.metricsContainer) {
             console.error('Required elements not found');
             return;
         }
@@ -19,29 +20,49 @@ class MovementAnalysis {
         this.canvas.height = 480;
         
         // Initialize components
-        this.pose = new MediaPipePose(this.video, this.canvas);
-        this.analyzer = new MovementAnalyzer('movement-metrics');
+        try {
+            this.pose = new MediaPipePose(this.video, this.canvas);
+            this.analyzer = new MovementAnalyzer('movement-metrics');
+            console.log('Components initialized successfully');
+        } catch (error) {
+            console.error('Failed to initialize components:', error);
+        }
     }
 
     async setupCamera() {
         try {
             console.log('Setting up camera...');
             const stream = await navigator.mediaDevices.getUserMedia({
-                video: { width: 640, height: 480 },
+                video: { 
+                    width: 640, 
+                    height: 480,
+                    facingMode: 'user'
+                },
                 audio: false
             });
-            this.video.srcObject = stream;
-            await this.video.play();
             
-            console.log('Starting pose detection...');
+            this.video.srcObject = stream;
+            
+            // Wait for video to be ready
+            await new Promise((resolve) => {
+                this.video.onloadedmetadata = () => {
+                    resolve();
+                };
+            });
+            
+            await this.video.play();
+            console.log('Camera setup complete');
+            
+            // Start pose detection
             await this.pose.start();
+            console.log('Pose detection started');
         } catch (error) {
-            console.error('Failed to initialize:', error);
-            const metrics = document.getElementById('movement-metrics');
-            if (metrics) {
-                metrics.innerHTML = `
+            console.error('Camera setup failed:', error);
+            if (this.metricsContainer) {
+                this.metricsContainer.innerHTML = `
                     <div class="error-message">
                         Failed to start camera. Please check permissions and refresh.
+                        Error: ${error.message}
                     </div>
                 `;
             }
@@ -51,6 +72,7 @@ class MovementAnalysis {
 
 // Start when page loads
 document.addEventListener('DOMContentLoaded', () => {
+    console.log('DOM loaded, starting application...');
     new MovementAnalysis();
 });
 
