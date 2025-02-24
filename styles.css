@@ -42,6 +42,9 @@ body {
     font-size: 1.5rem;
     font-weight: 600;
     color: var(--accent);
+    background: linear-gradient(90deg, var(--accent), #4a90e2);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
 }
 
 .nav-links a {
@@ -111,6 +114,8 @@ main {
     border-radius: 8px;
     scrollbar-width: thin;
     scrollbar-color: rgba(255, 255, 255, 0.3) transparent;
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
 }
 
 .metrics-panel::-webkit-scrollbar {
@@ -141,6 +146,12 @@ main {
     padding: 12px;
     border-radius: 5px;
     margin-bottom: 8px;
+    transition: transform 0.2s ease, background 0.2s ease;
+}
+
+.metric-value:hover {
+    transform: translateY(-2px);
+    background: rgba(76, 175, 80, 0.1);
 }
 
 .metric-header {
@@ -205,11 +216,6 @@ main {
     display: grid;
     grid-template-columns: repeat(2, 1fr);
     gap: 10px;
-}
-
-.metric-value:hover {
-    background: rgba(97, 97, 97, 0.8);
-    border-color: rgba(255,255,255,0.2);
 }
 
 .metric-label {
@@ -624,6 +630,11 @@ main {
     padding: 2rem;
     background: var(--surface);
     border-radius: 1rem;
+    transition: transform 0.3s ease;
+}
+
+.info-section:hover {
+    transform: translateY(-5px);
 }
 
 .info-section h2 {
@@ -699,4 +710,73 @@ footer {
 footer a {
     color: var(--accent);
     text-decoration: none;
+}
+
+/* Add responsive design improvements */
+@media (max-width: 1200px) {
+    .container {
+        padding: 0 1rem;
+    }
+    
+    .analysis-section {
+        grid-template-columns: 1fr;
+        gap: 1rem;
+    }
+    
+    .video-container {
+        width: 100%;
+        max-width: 640px;
+        margin: 0 auto;
+    }
+}
+
+/* Add dark mode toggle */
+.theme-toggle {
+    background: none;
+    border: none;
+    color: var(--text);
+    cursor: pointer;
+    padding: 0.5rem;
+    border-radius: 50%;
+    transition: background 0.2s ease;
+}
+
+.theme-toggle:hover {
+    background: var(--surface);
+}
+
+/* Add loading screen */
+.loading-screen {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.8);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    backdrop-filter: blur(5px);
+    z-index: 1000;
+}
+
+.loading-spinner {
+    width: 40px;
+    height: 40px;
+    border: 3px solid var(--surface);
+    border-top: 3px solid var(--accent);
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+    margin-bottom: 1rem;
+}
+
+.loading-text {
+    color: var(--text);
+    font-size: 1.1rem;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
 } 
