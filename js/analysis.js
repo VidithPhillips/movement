@@ -31,13 +31,21 @@ class MovementAnalyzer {
             }
         }
 
-        this.distanceGauge = {
-            fill: document.querySelector('.gauge-fill'),
-            optimal: {
-                min: 0.35,
-                max: 0.45
+        // Initialize distance gauge after DOM is ready
+        requestAnimationFrame(() => {
+            this.distanceGauge = {
+                fill: document.querySelector('.gauge-fill'),
+                optimal: {
+                    min: 0.35,
+                    max: 0.45
+                }
+            };
+            
+            // Add error handling
+            if (!this.distanceGauge.fill) {
+                console.error('Distance gauge element not found');
             }
-        };
+        });
     }
 
     setupMetrics() {
@@ -623,7 +631,11 @@ class MovementAnalyzer {
     }
 
     updateDistanceGauge(landmarks) {
+        if (!this.distanceGauge?.fill) return;
+        
         const distance = this.estimateDistanceFromCamera(landmarks);
+        if (distance === null) return;
+        
         const fill = this.distanceGauge.fill;
         
         // Remove existing classes

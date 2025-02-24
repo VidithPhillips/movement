@@ -472,7 +472,7 @@ body {
     padding: 12px;
     border-radius: 8px;
     width: 200px;
-    z-index: 10;
+    z-index: 100;
 }
 
 .gauge-label {
