@@ -119,9 +119,10 @@ main {
 
 .metrics-panel {
     max-height: 480px;
+    padding: 15px;
+    font-size: 0.9em;
     overflow-y: auto;
     background: rgba(255, 255, 255, 0.1);
-    padding: 20px;
     border-radius: 8px;
     scrollbar-width: thin;
     scrollbar-color: rgba(255, 255, 255, 0.3) transparent;
@@ -145,30 +146,30 @@ main {
 }
 
 .metric-box {
+    margin-bottom: 12px;
+    border-radius: 8px;
     background: linear-gradient(145deg, 
         rgba(255, 255, 255, 0.05) 0%,
         rgba(255, 255, 255, 0.02) 100%);
     border: 1px solid rgba(255, 255, 255, 0.1);
     box-shadow: 0 4px 24px -1px rgba(0, 0, 0, 0.2);
     backdrop-filter: blur(10px);
-    margin-bottom: 20px;
-    border-radius: 12px;
-    overflow: hidden;
 }
 
 .metric-box h3 {
+    padding: 10px 15px;
+    font-size: 1em;
     background: linear-gradient(90deg, var(--gradient-1), var(--gradient-2));
     margin: 0;
-    padding: 15px 20px;
     color: var(--background);
     font-weight: 600;
     letter-spacing: 0.5px;
 }
 
 .metric-value {
+    padding: 10px;
     background: rgba(255, 255, 255, 0.03);
     border: 1px solid rgba(255, 255, 255, 0.1);
-    padding: 15px;
     border-radius: 8px;
     transition: all 0.3s ease;
 }
@@ -181,9 +182,9 @@ main {
 }
 
 .metric-header {
+    margin-bottom: 6px;
+    font-size: 0.8em;
     color: var(--text-secondary);
-    font-size: 0.9em;
-    margin-bottom: 10px;
     text-transform: uppercase;
     letter-spacing: 1px;
 }
@@ -230,7 +231,8 @@ main {
 }
 
 .metric-grid {
-    padding: 15px;
+    padding: 10px;
+    gap: 8px;
 }
 
 .metric-label {
@@ -546,6 +548,7 @@ main {
 .value {
     position: relative;
     transition: all 0.3s ease;
+    font-size: 1.2em;
 }
 
 .value.changed {
@@ -645,21 +648,19 @@ main {
 }
 
 .bilateral-values {
-    display: flex;
-    justify-content: space-around;
-    gap: 10px;
+    gap: 6px;
 }
 
 .bilateral-values span {
+    padding: 6px 8px;
+    font-size: 1.1em;
     flex: 1;
     background: linear-gradient(145deg, 
         rgba(96, 239, 255, 0.1) 0%,
         rgba(0, 97, 255, 0.1) 100%);
-    padding: 10px;
     border-radius: 8px;
     text-align: center;
     font-weight: 600;
-    font-size: 1.2em;
     color: var(--gradient-2);
     border: 1px solid rgba(96, 239, 255, 0.2);
     text-shadow: 0 0 20px rgba(96, 239, 255, 0.3);
@@ -670,14 +671,6 @@ main {
         rgba(96, 239, 255, 0.2) 0%,
         rgba(0, 97, 255, 0.2) 100%);
     border-color: var(--gradient-2);
-}
-
-.value {
-    font-size: 1.4em;
-    font-weight: 600;
-    text-align: center;
-    color: var(--gradient-2);
-    text-shadow: 0 0 20px rgba(96, 239, 255, 0.3);
 }
 
 /* Instructions Section */
