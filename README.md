@@ -1,6 +1,38 @@
-# Movement Analysis System
+# Movement Analysis
 
-> Real-time movement analysis using AI-powered motion tracking with clinical metrics and 3D visualization.
+**Try it now: [Live Demo](https://vidithphillips.github.io/movement/)**
+
+Real-time movement analysis using MediaPipe Pose detection. Tracks and measures key body angles and metrics for movement assessment.
+
+## Features
+- Real-time pose detection and tracking
+- Joint angle measurements
+- Bilateral movement comparison
+- Core alignment tracking
+- Movement quality metrics
+
+## Technology
+- MediaPipe Pose Detection
+- Three.js for 3D visualization
+- Real-time metric calculations
+- Browser-based camera integration
+
+## Usage
+1. Allow camera access when prompted
+2. Stand back so your full body is visible
+3. Move naturally to see real-time metrics
+
+## Development
+To run locally:
+```bash
+# Using a local server (e.g. Python)
+python -m http.server 8000
+
+# Or any other static file server
+```
+
+## License
+MIT License
 
 ## Overview
 This system provides real-time analysis of human movement using computer vision, offering precise measurements across different anatomical planes with clinical context.
@@ -79,9 +111,6 @@ This system provides real-time analysis of human movement using computer vision,
 - [ ] Temporal analysis features
 - [ ] Advanced clinical metrics
 - [ ] Movement quality scoring
-
-## License
-MIT License - See LICENSE file for details
 
 ---
 
