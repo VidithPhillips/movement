@@ -9,7 +9,7 @@
     <link rel="preconnect" href="https://cdn.jsdelivr.net/npm/@mediapipe">
     <title>Movement Analysis</title>
     <link rel="stylesheet" href="styles.css">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
     
     <!-- Core Dependencies -->
     <script src="https://cdn.jsdelivr.net/npm/@mediapipe/pose/pose.js"></script>
@@ -18,15 +18,80 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 </head>
 <body>
-    <div class="container">
-        <div class="video-container">
-            <video id="video" playsinline></video>
-            <canvas id="output"></canvas>
+    <nav class="navbar">
+        <div class="nav-content">
+            <h1>Movement Analysis</h1>
+            <div class="nav-links">
+                <a href="#about">About</a>
+                <a href="#instructions">Instructions</a>
+                <a href="https://github.com/VidithPhillips/movement" target="_blank">GitHub</a>
+            </div>
         </div>
-        <div class="metrics-panel">
-            <div id="movement-metrics"></div>
+    </nav>
+
+    <main>
+        <div class="container">
+            <div class="analysis-section">
+                <div class="video-container">
+                    <video id="video" playsinline></video>
+                    <canvas id="output"></canvas>
+                </div>
+                <div class="metrics-panel">
+                    <div id="movement-metrics"></div>
+                </div>
+            </div>
+
+            <section id="instructions" class="info-section">
+                <h2>How to Use</h2>
+                <div class="instruction-cards">
+                    <div class="card">
+                        <div class="card-number">1</div>
+                        <h3>Allow Camera</h3>
+                        <p>Enable camera access when prompted</p>
+                    </div>
+                    <div class="card">
+                        <div class="card-number">2</div>
+                        <h3>Position Yourself</h3>
+                        <p>Stand back so your full body is visible</p>
+                    </div>
+                    <div class="card">
+                        <div class="card-number">3</div>
+                        <h3>Start Moving</h3>
+                        <p>Move naturally to see real-time metrics</p>
+                    </div>
+                </div>
+            </section>
+
+            <section id="about" class="info-section">
+                <h2>About</h2>
+                <div class="about-content">
+                    <p>This tool provides real-time movement analysis using advanced pose detection. Track joint angles, body alignment, and movement patterns with clinical-grade precision.</p>
+                    <div class="feature-grid">
+                        <div class="feature">
+                            <h4>Real-time Analysis</h4>
+                            <p>Instant feedback on movement patterns</p>
+                        </div>
+                        <div class="feature">
+                            <h4>Joint Tracking</h4>
+                            <p>Precise angle measurements</p>
+                        </div>
+                        <div class="feature">
+                            <h4>Body Alignment</h4>
+                            <p>Track posture and symmetry</p>
+                        </div>
+                        <div class="feature">
+                            <h4>Movement Quality</h4>
+                            <p>Assess movement patterns</p>
+                        </div>
+                    </div>
+                </div>
+            </section>
         </div>
-    </div>
+    </main>
+
+    <footer>
+        <p>Created by <a href="https://github.com/VidithPhillips" target="_blank">Vidith Phillips</a></p>
+    </footer>
 
     <!-- Application Scripts -->
     <script src="js/3dVisualizer.js"></script>

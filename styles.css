@@ -1,18 +1,76 @@
+/* Base Styles */
+:root {
+    --primary: #4a90e2;
+    --secondary: #2c3e50;
+    --background: #121212;
+    --surface: rgba(255, 255, 255, 0.1);
+    --text: #ffffff;
+    --text-secondary: rgba(255, 255, 255, 0.7);
+    --accent: #64ffda;
+}
+
 body {
     margin: 0;
-    padding: 20px;
-    background: #121212;
-    color: white;
+    padding: 0;
+    background: var(--background);
+    color: var(--text);
     font-family: 'Inter', sans-serif;
+    line-height: 1.6;
+}
+
+/* Navigation */
+.navbar {
+    background: rgba(255, 255, 255, 0.05);
+    backdrop-filter: blur(10px);
+    padding: 1rem 0;
+    position: sticky;
+    top: 0;
+    z-index: 1000;
+}
+
+.nav-content {
+    max-width: 1600px;
+    margin: 0 auto;
+    padding: 0 2rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.nav-content h1 {
+    margin: 0;
+    font-size: 1.5rem;
+    font-weight: 600;
+    color: var(--accent);
+}
+
+.nav-links a {
+    color: var(--text);
+    text-decoration: none;
+    margin-left: 2rem;
+    transition: color 0.3s ease;
+}
+
+.nav-links a:hover {
+    color: var(--accent);
+}
+
+/* Main Content */
+main {
+    padding: 2rem 0;
 }
 
 .container {
-    display: grid;
-    grid-template-columns: 640px minmax(300px, 1fr);
-    gap: 20px;
     max-width: 1600px;
     margin: 0 auto;
-    align-items: start;
+    padding: 0 2rem;
+}
+
+.analysis-section {
+    display: grid;
+    grid-template-columns: 640px minmax(300px, 1fr);
+    gap: 2rem;
+    margin-bottom: 4rem;
 }
 
 .video-container {
@@ -558,4 +616,87 @@ body {
     font-size: 1.2em;
     text-align: center;
     color: #fff;
+}
+
+/* Instructions Section */
+.info-section {
+    margin: 4rem 0;
+    padding: 2rem;
+    background: var(--surface);
+    border-radius: 1rem;
+}
+
+.info-section h2 {
+    color: var(--accent);
+    margin-bottom: 2rem;
+}
+
+.instruction-cards {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 2rem;
+}
+
+.card {
+    background: rgba(255, 255, 255, 0.05);
+    padding: 2rem;
+    border-radius: 1rem;
+    position: relative;
+    transition: transform 0.3s ease;
+}
+
+.card:hover {
+    transform: translateY(-5px);
+}
+
+.card-number {
+    position: absolute;
+    top: -1rem;
+    left: -1rem;
+    width: 2.5rem;
+    height: 2.5rem;
+    background: var(--accent);
+    color: var(--background);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 600;
+}
+
+/* Feature Grid */
+.feature-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 2rem;
+    margin-top: 2rem;
+}
+
+.feature {
+    background: rgba(255, 255, 255, 0.05);
+    padding: 1.5rem;
+    border-radius: 0.5rem;
+    transition: background 0.3s ease;
+}
+
+.feature:hover {
+    background: rgba(255, 255, 255, 0.1);
+}
+
+.feature h4 {
+    color: var(--accent);
+    margin: 0 0 0.5rem 0;
+}
+
+/* Footer */
+footer {
+    text-align: center;
+    padding: 2rem;
+    background: rgba(255, 255, 255, 0.05);
+    margin-top: 4rem;
+}
+
+footer a {
+    color: var(--accent);
+    text-decoration: none;
 } 
