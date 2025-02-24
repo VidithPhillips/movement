@@ -395,27 +395,23 @@ class MovementAnalyzer {
         if (!this.distanceGauge?.fill) return;
         
         const distance = this.estimateDistanceFromCamera(landmarks);
-        if (!distance) return;
+        if (distance === null) return;
         
         const fill = this.distanceGauge.fill;
-        const label = document.querySelector('.gauge-label');
         
         // Remove existing classes
         fill.classList.remove('too-close', 'optimal', 'too-far');
         
-        // Update gauge and label
-        if (distance.tooClose) {
+        // Update gauge based on distance
+        if (distance < this.distanceGauge.optimal.min) {
             fill.classList.add('too-close');
-            fill.style.width = '90%';
-            label.textContent = `Too Close (${distance.value.toFixed(1)}ft)`;
-        } else if (distance.tooFar) {
+            fill.style.width = `${(distance / this.distanceGauge.optimal.min) * 30}%`;
+        } else if (distance > this.distanceGauge.optimal.max) {
             fill.classList.add('too-far');
-            fill.style.width = '30%';
-            label.textContent = `Too Far (${distance.value.toFixed(1)}ft)`;
+            fill.style.width = `${(distance / this.distanceGauge.optimal.max) * 80}%`;
         } else {
             fill.classList.add('optimal');
-            fill.style.width = '60%';
-            label.textContent = `Distance: ${distance.value.toFixed(1)}ft`;
+            fill.style.width = '50%';
         }
     }
 } 
