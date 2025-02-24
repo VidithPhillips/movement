@@ -1,8 +1,15 @@
 class MovementAnalyzer {
     constructor(containerId) {
+        console.log('Initializing MovementAnalyzer...');
         this.container = document.getElementById(containerId);
+        if (!this.container) {
+            console.error('Container not found:', containerId);
+            return;
+        }
+        
         this.setupMetrics();
         this.setupEventListeners();
+        console.log('MovementAnalyzer initialized');
         
         // Store historical data for range of motion
         this.angleHistory = {
@@ -57,17 +64,21 @@ class MovementAnalyzer {
     }
 
     setupEventListeners() {
+        console.log('Setting up event listeners...');
         window.addEventListener('pose-updated', (event) => {
+            console.log('Pose update received:', event.detail ? 'with landmarks' : 'no landmarks');
             this.updateMetrics(event.detail);
         });
     }
 
     updateMetrics(landmarks) {
-        if (!landmarks) return;
+        if (!landmarks) {
+            console.log('No landmarks received');
+            return;
+        }
 
-        // Always update distance gauge
-        this.updateDistanceGauge(landmarks);
-
+        console.log('Updating metrics...');
+        
         // Calculate metrics
         const metrics = {
             upperBody: {
@@ -93,7 +104,7 @@ class MovementAnalyzer {
             }
         };
 
-        // Update display
+        console.log('Metrics calculated:', metrics);
         this.updateDisplay(metrics);
     }
 

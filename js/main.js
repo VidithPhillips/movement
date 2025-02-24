@@ -1,5 +1,6 @@
 class MovementAnalysis {
     constructor() {
+        console.log('Initializing MovementAnalysis...');
         this.initializeComponents();
         this.setupCamera();
     }
@@ -11,14 +12,19 @@ class MovementAnalysis {
         this.canvas.width = 640;
         this.canvas.height = 480;
         
+        console.log('Initializing components...');
+        
         // Initialize components
         this.pose = new MediaPipePose(this.video, this.canvas);
         this.analyzer = new MovementAnalyzer('movement-metrics');
         this.visualizer = new PoseVisualizer3D(document.querySelector('.video-container'));
+        
+        console.log('Components initialized');
     }
 
     async setupCamera() {
         try {
+            console.log('Setting up camera...');
             const stream = await navigator.mediaDevices.getUserMedia({
                 video: { width: 640, height: 480 },
                 audio: false
@@ -27,7 +33,9 @@ class MovementAnalysis {
             await this.video.play();
             
             // Start pose detection
+            console.log('Starting pose detection...');
             await this.pose.start();
+            console.log('Pose detection started');
         } catch (error) {
             console.error('Failed to initialize:', error);
             const metrics = document.getElementById('movement-metrics');
@@ -42,6 +50,7 @@ class MovementAnalysis {
 
 // Start when page loads
 document.addEventListener('DOMContentLoaded', () => {
+    console.log('DOM loaded, starting application...');
     new MovementAnalysis();
 });
 
