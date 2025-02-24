@@ -177,6 +177,7 @@ main {
     transform: translateY(-2px);
     background: rgba(255, 255, 255, 0.05);
     border-color: var(--gradient-2);
+    box-shadow: 0 8px 32px -4px rgba(96, 239, 255, 0.1);
 }
 
 .metric-header {
@@ -417,19 +418,26 @@ main {
 }
 
 .value.excellent {
-    color: var(--metric-good);
+    background: linear-gradient(90deg, var(--gradient-1), var(--gradient-2));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
 }
 
 .value.good {
-    color: var(--gradient-1);
+    background: linear-gradient(90deg, var(--gradient-1), var(--gradient-2));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    opacity: 0.9;
 }
 
 .value.fair {
     color: var(--metric-warning);
+    text-shadow: 0 0 20px rgba(255, 214, 0, 0.3);
 }
 
 .value.poor {
     color: var(--metric-error);
+    text-shadow: 0 0 20px rgba(255, 77, 77, 0.3);
 }
 
 .metric-box {
@@ -546,7 +554,7 @@ main {
 
 @keyframes valuePulse {
     0% { transform: scale(1); filter: brightness(1); }
-    50% { transform: scale(1.05); filter: brightness(1.2); }
+    50% { transform: scale(1.05); filter: brightness(1.3); }
     100% { transform: scale(1); filter: brightness(1); }
 }
 
@@ -647,21 +655,28 @@ main {
     background: linear-gradient(145deg, 
         rgba(96, 239, 255, 0.1) 0%,
         rgba(0, 97, 255, 0.1) 100%);
-    padding: 8px;
-    border-radius: 6px;
+    padding: 10px;
+    border-radius: 8px;
     text-align: center;
-    font-weight: 500;
-    color: var(--metric-neutral);
+    font-weight: 600;
+    font-size: 1.2em;
+    color: var(--gradient-2);
     border: 1px solid rgba(96, 239, 255, 0.2);
+    text-shadow: 0 0 20px rgba(96, 239, 255, 0.3);
+}
+
+.bilateral-values span:hover {
+    background: linear-gradient(145deg, 
+        rgba(96, 239, 255, 0.2) 0%,
+        rgba(0, 97, 255, 0.2) 100%);
+    border-color: var(--gradient-2);
 }
 
 .value {
     font-size: 1.4em;
     font-weight: 600;
     text-align: center;
-    background: linear-gradient(90deg, var(--gradient-1), var(--gradient-2));
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
+    color: var(--gradient-2);
     text-shadow: 0 0 20px rgba(96, 239, 255, 0.3);
 }
 
