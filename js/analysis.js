@@ -99,25 +99,42 @@ class MovementAnalyzer {
             lower: this.calculateSegmentConfidence(landmarks, [23, 24, 25, 26, 27, 28])
         };
 
-        // Calculate available metrics based on what's visible
         let metrics = {};
 
+        // Upper Body Metrics
         if (confidence.upper.isValid) {
             metrics.upperBody = {
-                shoulderAngle: this.calculateAngle(landmarks[13], landmarks[11], landmarks[23]),
-                neckTilt: this.calculateAngle(landmarks[7], landmarks[0], landmarks[11])
-                // Add other upper body metrics
+                shoulderAngle: {
+                    left: this.calculateAngle(landmarks[13], landmarks[11], landmarks[23]),
+                    right: this.calculateAngle(landmarks[14], landmarks[12], landmarks[24])
+                },
+                neckTilt: this.calculateAngle(landmarks[7], landmarks[0], landmarks[11]),
+                shoulderLevel: this.calculateHorizontalDeviation(landmarks[11], landmarks[12]),
+                elbowAngle: {
+                    left: this.calculateAngle(landmarks[11], landmarks[13], landmarks[15]),
+                    right: this.calculateAngle(landmarks[12], landmarks[14], landmarks[16])
+                },
+                shoulderProtraction: {
+                    left: this.calculateDepth(landmarks[11], landmarks[13]),
+                    right: this.calculateDepth(landmarks[12], landmarks[14])
+                }
             };
         }
 
+        // Core Metrics
         if (confidence.core.isValid) {
             metrics.core = {
                 spineAngle: this.calculateAngle(landmarks[0], landmarks[11], landmarks[23]),
-                trunkLean: this.calculateVerticalDeviation([landmarks[11], landmarks[23]])
-                // Add other core metrics
+                trunkLean: this.calculateVerticalDeviation([landmarks[11], landmarks[23]]),
+                pelvisLevel: this.calculateHorizontalDeviation(landmarks[23], landmarks[24]),
+                torsoRotation: this.calculateRotation(
+                    [landmarks[11], landmarks[12]], // shoulders
+                    [landmarks[23], landmarks[24]]  // hips
+                )
             };
         }
 
+        // Lower Body Metrics
         if (confidence.lower.isValid) {
             metrics.lowerBody = {
                 kneeAngle: {
@@ -127,12 +144,29 @@ class MovementAnalyzer {
                 hipAngle: {
                     left: this.calculateAngle(landmarks[11], landmarks[23], landmarks[25]),
                     right: this.calculateAngle(landmarks[12], landmarks[24], landmarks[26])
+                },
+                ankleAngle: {
+                    left: this.calculateAngle(landmarks[25], landmarks[27], landmarks[31]),
+                    right: this.calculateAngle(landmarks[26], landmarks[28], landmarks[32])
+                },
+                kneeAlignment: {
+                    left: this.calculateAlignment(landmarks[23], landmarks[25], landmarks[27]),
+                    right: this.calculateAlignment(landmarks[24], landmarks[26], landmarks[28])
                 }
-                // Add other lower body metrics
             };
         }
 
-        // Update display with available metrics
+        // Add movement quality metrics
+        metrics.quality = {
+            symmetry: {
+                shoulders: this.calculateSymmetry(metrics.upperBody?.shoulderAngle),
+                hips: this.calculateSymmetry(metrics.lowerBody?.hipAngle),
+                knees: this.calculateSymmetry(metrics.lowerBody?.kneeAngle)
+            },
+            stability: this.calculatePosturalStability(landmarks),
+            balance: this.calculateBalanceScore(landmarks)
+        };
+
         this.updateDisplay(metrics, confidence);
     }
 
@@ -248,173 +282,36 @@ class MovementAnalyzer {
         return Math.max(0, 100 - (dy * 200));
     }
 
-    updateMovementQuality(landmarks) {
-        this.metrics.quality = {
-            postural: {
-                alignment: {
-                    value: this.calculatePosturalAlignment(landmarks),
-                    description: "Overall postural alignment",
-                    normal: "80-100%",
-                    clinical: "Indicates overall postural control"
-                },
-                stability: {
-                    value: this.calculateStability(landmarks),
-                    description: "Postural stability",
-                    normal: "85-100%",
-                    clinical: "Balance and stability assessment"
-                }
-            },
-            symmetry: {
-                upper: {
-                    value: this.calculateUpperBodySymmetry(landmarks),
-                    description: "Upper body symmetry",
-                    normal: "90-100%",
-                    clinical: "Left-right upper body comparison"
-                },
-                lower: {
-                    value: this.calculateLowerBodySymmetry(landmarks),
-                    description: "Lower body symmetry",
-                    normal: "90-100%",
-                    clinical: "Left-right lower body comparison"
-                }
-            },
-            movement: {
-                smoothness: {
-                    value: this.calculateMovementSmoothness(),
-                    description: "Movement smoothness",
-                    normal: "85-100%",
-                    clinical: "Quality of movement transitions"
-                },
-                coordination: {
-                    value: this.calculateCoordination(landmarks),
-                    description: "Movement coordination",
-                    normal: "80-100%",
-                    clinical: "Multi-joint coordination"
-                }
-            }
-        };
+    calculateDepth(point1, point2) {
+        if (!point1?.z || !point2?.z) return null;
+        return Math.abs(point1.z - point2.z);
     }
 
-    calculatePosturalAlignment(landmarks) {
-        // Calculate vertical alignment of key points
-        const verticalPoints = [landmarks[0], landmarks[11], landmarks[23], landmarks[25]];
-        let alignment = this.calculateVerticalDeviation(verticalPoints);
-        
-        // Adjust for distance from camera
-        const distance = this.estimateDistanceFromCamera(landmarks);
-        return this.adjustMetricForDistance(alignment, distance);
+    calculateRotation(line1, line2) {
+        // Calculate angle between two lines (e.g., shoulders vs hips)
+        const angle1 = Math.atan2(line1[1].y - line1[0].y, line1[1].x - line1[0].x);
+        const angle2 = Math.atan2(line2[1].y - line2[0].y, line2[1].x - line2[0].x);
+        return Math.abs((angle1 - angle2) * 180 / Math.PI);
     }
 
-    calculateStability(landmarks) {
-        // Track movement of center points over time
-        const centerPoints = [
-            landmarks[23], // left hip
-            landmarks[24]  // right hip
-        ];
-        
-        // Calculate stability based on movement variation
-        return this.calculateMovementStability(centerPoints);
+    calculateAlignment(point1, point2, point3) {
+        // Calculate deviation from straight line
+        const expectedY = point1.y + (point3.y - point1.y) * 
+            ((point2.x - point1.x) / (point3.x - point1.x));
+        return Math.abs(point2.y - expectedY);
     }
 
-    estimateDistanceFromCamera(landmarks) {
-        // Use height of the person in frame as reference
-        const topPoint = landmarks[0];  // nose
-        const bottomPoint = landmarks[28]; // right ankle
-        
-        if (!topPoint || !bottomPoint) return null;
-        
-        const personHeight = Math.abs(bottomPoint.y - topPoint.y);
-        const frameHeight = 1.0; // MediaPipe normalizes to 0-1
-        
-        // Calculate percentage of frame occupied
-        const frameOccupancy = personHeight / frameHeight;
-        
-        // Rough distance estimate (in feet) based on frame occupancy
-        // When person takes up ~70% of frame height, they're typically at optimal distance
-        const estimatedDistance = 7 * (0.7 / frameOccupancy);
-        
-        return {
-            value: estimatedDistance,
-            isValid: frameOccupancy > 0.4 && frameOccupancy < 0.95, // Allow wider range
-            tooClose: frameOccupancy > 0.95,
-            tooFar: frameOccupancy < 0.4
-        };
+    calculateSymmetry(bilateralMetric) {
+        if (!bilateralMetric?.left || !bilateralMetric?.right) return null;
+        const diff = Math.abs(bilateralMetric.left - bilateralMetric.right);
+        return Math.max(0, 100 - (diff * 2));
     }
 
-    adjustMetricForDistance(value, distance) {
-        // Adjust metrics based on subject's distance from camera
-        const optimalDistance = 0.4; // normalized optimal distance
-        const tolerance = 0.1;
-        
-        if (Math.abs(distance.value - optimalDistance) > tolerance) {
-            return null; // or return adjusted value
-        }
-        return value;
-    }
-
-    calculateMovementStability(points, timeWindow = 30) {
-        // Calculate stability over time window
-        if (!this.positionHistory) {
-            this.positionHistory = [];
-        }
-        
-        this.positionHistory.push(points);
-        if (this.positionHistory.length > timeWindow) {
-            this.positionHistory.shift();
-        }
-        
-        // Calculate variation in position
-        return this.calculateStabilityScore(this.positionHistory);
-    }
-
-    normalizeDistance(shoulderWidth) {
-        // Normalize shoulder width to 0-1 range
-        // Typical shoulder width in pixels at 6-8 feet
-        const minWidth = 100;
-        const maxWidth = 200;
-        return (shoulderWidth - minWidth) / (maxWidth - minWidth);
-    }
-
-    calculateStabilityScore(history) {
-        if (history.length < 2) return 100;
-        
-        // Calculate movement variance
-        let totalVariance = 0;
-        for (let i = 1; i < history.length; i++) {
-            const prev = history[i-1];
-            const curr = history[i];
-            totalVariance += this.calculatePointsVariance(prev, curr);
-        }
-        
-        // Convert to stability score (100% = perfectly stable)
-        return Math.max(0, 100 - (totalVariance * 100));
-    }
-
-    calculatePointsVariance(points1, points2) {
-        // Calculate movement variance between two sets of points
-        let totalVariance = 0;
-        for (let i = 0; i < points1.length; i++) {
-            const dx = points1[i].x - points2[i].x;
-            const dy = points1[i].y - points2[i].y;
-            totalVariance += dx*dx + dy*dy;
-        }
-        return Math.sqrt(totalVariance / points1.length);
-    }
-
-    calculateUpperBodySymmetry(landmarks) {
-        // Implementation of calculateUpperBodySymmetry method
-    }
-
-    calculateLowerBodySymmetry(landmarks) {
-        // Implementation of calculateLowerBodySymmetry method
-    }
-
-    calculateMovementSmoothness() {
-        // Implementation of calculateMovementSmoothness method
-    }
-
-    calculateCoordination(landmarks) {
-        // Implementation of calculateCoordination method
+    calculateBalanceScore(landmarks) {
+        // Calculate center of mass and base of support
+        const com = this.calculateCenterOfMass(landmarks);
+        const bos = this.calculateBaseOfSupport(landmarks);
+        return this.calculateStabilityIndex(com, bos);
     }
 
     updateRangeOfMotion(landmarks) {
