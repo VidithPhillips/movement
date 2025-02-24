@@ -118,10 +118,10 @@ main {
 }
 
 .metrics-panel {
-    max-height: 480px;
+    height: 480px;
     padding: 10px;
-    font-size: 0.85em;
-    gap: 8px;
+    font-size: 0.8em;
+    gap: 4px;
     overflow-y: auto;
     background: rgba(255, 255, 255, 0.1);
     border-radius: 8px;
@@ -148,7 +148,8 @@ main {
 
 .metric-box {
     margin-bottom: 8px;
-    border-radius: 6px;
+    height: auto;
+    border-radius: 4px;
     background: linear-gradient(145deg, 
         rgba(255, 255, 255, 0.05) 0%,
         rgba(255, 255, 255, 0.02) 100%);
@@ -158,8 +159,12 @@ main {
 }
 
 .metric-box h3 {
-    padding: 6px 10px;
-    font-size: 0.9em;
+    padding: 6px 8px;
+    font-size: 0.85em;
+    height: 20px;
+    line-height: 20px;
+    display: flex;
+    align-items: center;
     background: linear-gradient(90deg, var(--gradient-1), var(--gradient-2));
     margin: 0;
     color: var(--background);
@@ -168,8 +173,12 @@ main {
 }
 
 .metric-value {
-    padding: 6px 8px;
-    border-radius: 6px;
+    padding: 6px;
+    height: 40px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    border-radius: 4px;
     background: rgba(255, 255, 255, 0.03);
     border: 1px solid rgba(255, 255, 255, 0.1);
     transition: all 0.3s ease;
@@ -183,11 +192,12 @@ main {
 }
 
 .metric-header {
-    margin-bottom: 4px;
-    font-size: 0.75em;
+    font-size: 0.7em;
+    margin-bottom: 2px;
+    line-height: 1;
     color: var(--text-secondary);
     text-transform: uppercase;
-    letter-spacing: 1px;
+    letter-spacing: 0.5px;
 }
 
 .normal-range {
@@ -205,14 +215,14 @@ main {
 }
 
 .metric-group {
-    padding: 8px;
-    margin-bottom: 8px;
+    padding: 6px;
+    margin-bottom: 6px;
     background: rgba(66, 66, 66, 0.3);
     border-radius: 5px;
 }
 
 .metrics-row {
-    gap: 1rem;
+    gap: 0.5rem;
 }
 
 .metric-box:hover {
@@ -549,7 +559,9 @@ main {
 .value {
     position: relative;
     transition: all 0.3s ease;
-    font-size: 1em;
+    font-size: 0.95em;
+    line-height: 20px;
+    height: 20px;
 }
 
 .value.changed {
@@ -649,12 +661,15 @@ main {
 }
 
 .bilateral-values {
+    display: flex;
     gap: 4px;
+    height: 20px;
+    line-height: 20px;
 }
 
 .bilateral-values span {
-    padding: 4px 6px;
-    font-size: 0.95em;
+    padding: 0 4px;
+    font-size: 0.9em;
     flex: 1;
     background: linear-gradient(145deg, 
         rgba(96, 239, 255, 0.1) 0%,
