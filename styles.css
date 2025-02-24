@@ -2,11 +2,22 @@
 :root {
     --primary: #4a90e2;
     --secondary: #2c3e50;
-    --background: #121212;
+    --background: #0a1929;
     --surface: rgba(255, 255, 255, 0.1);
     --text: #ffffff;
     --text-secondary: rgba(255, 255, 255, 0.7);
     --accent: #64ffda;
+    
+    /* New gradient colors */
+    --gradient-1: #00ff87;
+    --gradient-2: #60efff;
+    --gradient-3: #0061ff;
+    
+    /* Metric colors */
+    --metric-good: #00ff87;
+    --metric-warning: #ffd600;
+    --metric-error: #ff4d4d;
+    --metric-neutral: #60efff;
 }
 
 body {
@@ -119,76 +130,61 @@ main {
 }
 
 .metrics-panel::-webkit-scrollbar {
-    width: 6px;
+    width: 8px;
 }
 
 .metrics-panel::-webkit-scrollbar-track {
-    background: transparent;
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 4px;
 }
 
 .metrics-panel::-webkit-scrollbar-thumb {
-    background: linear-gradient(to bottom, var(--accent), var(--primary));
-    border-radius: 10px;
-    border: 3px solid rgba(0, 0, 0, 0.2);
+    background: linear-gradient(to bottom, var(--gradient-1), var(--gradient-2));
+    border-radius: 4px;
+    border: 2px solid rgba(0, 0, 0, 0.2);
 }
 
 .metric-box {
-    margin-bottom: 20px;
     background: linear-gradient(145deg, 
         rgba(255, 255, 255, 0.05) 0%,
         rgba(255, 255, 255, 0.02) 100%);
     border: 1px solid rgba(255, 255, 255, 0.1);
     box-shadow: 0 4px 24px -1px rgba(0, 0, 0, 0.2);
     backdrop-filter: blur(10px);
+    margin-bottom: 20px;
+    border-radius: 12px;
+    overflow: hidden;
 }
 
 .metric-box h3 {
-    margin: 0 0 10px 0;
-    font-size: 18px;
-    color: #fff;
+    background: linear-gradient(90deg, var(--gradient-1), var(--gradient-2));
+    margin: 0;
+    padding: 15px 20px;
+    color: var(--background);
+    font-weight: 600;
+    letter-spacing: 0.5px;
 }
 
 .metric-value {
-    background: rgba(66, 66, 66, 0.6);
-    padding: 12px;
-    border-radius: 5px;
-    margin-bottom: 8px;
-    transition: transform 0.2s ease, background 0.2s ease;
-    position: relative;
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    padding: 15px;
+    border-radius: 8px;
+    transition: all 0.3s ease;
 }
 
 .metric-value:hover {
     transform: translateY(-2px);
-    background: rgba(76, 175, 80, 0.1);
-}
-
-.metric-value::after {
-    content: attr(data-tooltip);
-    position: absolute;
-    bottom: 100%;
-    left: 50%;
-    transform: translateX(-50%);
-    padding: 8px;
-    background: rgba(0, 0, 0, 0.9);
-    color: white;
-    border-radius: 4px;
-    font-size: 0.9rem;
-    white-space: nowrap;
-    opacity: 0;
-    visibility: hidden;
-    transition: all 0.3s ease;
-}
-
-.metric-value:hover::after {
-    opacity: 1;
-    visibility: visible;
-    transform: translateX(-50%) translateY(-8px);
+    background: rgba(255, 255, 255, 0.05);
+    border-color: var(--gradient-2);
 }
 
 .metric-header {
-    color: #aaa;
+    color: var(--text-secondary);
     font-size: 0.9em;
-    margin-bottom: 8px;
+    margin-bottom: 10px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
 }
 
 .normal-range {
@@ -219,13 +215,11 @@ main {
 }
 
 .metric-box:hover {
-    transform: translateY(-2px);
+    box-shadow: 0 8px 32px -4px rgba(96, 239, 255, 0.1);
 }
 
-.metric-box h3 {
-    margin: 0 0 15px 0;
-    color: #ffffff;
-    font-weight: 500;
+.metric-value:hover .value {
+    text-shadow: 0 0 30px rgba(96, 239, 255, 0.4);
 }
 
 #angleChart {
@@ -235,9 +229,7 @@ main {
 }
 
 .metric-grid {
-    display: grid;
-    grid-template-columns: repeat(2, 1fr);
-    gap: 10px;
+    padding: 15px;
 }
 
 .metric-label {
@@ -425,35 +417,40 @@ main {
 }
 
 .value.excellent {
-    color: #4caf50;
+    color: var(--metric-good);
 }
 
 .value.good {
-    color: #8bc34a;
+    color: var(--gradient-1);
 }
 
 .value.fair {
-    color: #ffc107;
+    color: var(--metric-warning);
 }
 
 .value.poor {
-    color: #f44336;
+    color: var(--metric-error);
 }
 
 .metric-box {
     background: linear-gradient(145deg, 
         rgba(255, 255, 255, 0.05) 0%,
         rgba(255, 255, 255, 0.02) 100%);
-    border-radius: 8px;
-    padding: 16px;
-    margin-bottom: 16px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    box-shadow: 0 4px 24px -1px rgba(0, 0, 0, 0.2);
+    backdrop-filter: blur(10px);
+    margin-bottom: 20px;
+    border-radius: 12px;
+    overflow: hidden;
 }
 
 .metric-box h3 {
-    margin: 0 0 12px 0;
-    color: #fff;
-    font-size: 16px;
-    font-weight: 500;
+    background: linear-gradient(90deg, var(--gradient-1), var(--gradient-2));
+    margin: 0;
+    padding: 15px 20px;
+    color: var(--background);
+    font-weight: 600;
+    letter-spacing: 0.5px;
 }
 
 .plane-indicator {
@@ -548,15 +545,15 @@ main {
 }
 
 @keyframes valuePulse {
-    0% { transform: scale(1); }
-    50% { transform: scale(1.1); }
-    100% { transform: scale(1); }
+    0% { transform: scale(1); filter: brightness(1); }
+    50% { transform: scale(1.05); filter: brightness(1.2); }
+    100% { transform: scale(1); filter: brightness(1); }
 }
 
-.value.excellent { color: #4caf50; }
-.value.good { color: #8bc34a; }
-.value.fair { color: #ffc107; }
-.value.poor { color: #f44336; }
+.value.excellent { color: var(--metric-good); }
+.value.good { color: var(--gradient-1); }
+.value.fair { color: var(--metric-warning); }
+.value.poor { color: var(--metric-error); }
 .value.normal { color: #4caf50; }
 .value.below { color: #ffc107; }
 .value.above { color: #f44336; }
@@ -642,20 +639,30 @@ main {
 .bilateral-values {
     display: flex;
     justify-content: space-around;
-    margin-top: 8px;
-    font-size: 1.1em;
+    gap: 10px;
 }
 
 .bilateral-values span {
-    background: rgba(255, 255, 255, 0.1);
-    padding: 4px 8px;
-    border-radius: 4px;
+    flex: 1;
+    background: linear-gradient(145deg, 
+        rgba(96, 239, 255, 0.1) 0%,
+        rgba(0, 97, 255, 0.1) 100%);
+    padding: 8px;
+    border-radius: 6px;
+    text-align: center;
+    font-weight: 500;
+    color: var(--metric-neutral);
+    border: 1px solid rgba(96, 239, 255, 0.2);
 }
 
 .value {
-    font-size: 1.2em;
+    font-size: 1.4em;
+    font-weight: 600;
     text-align: center;
-    color: #fff;
+    background: linear-gradient(90deg, var(--gradient-1), var(--gradient-2));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    text-shadow: 0 0 20px rgba(96, 239, 255, 0.3);
 }
 
 /* Instructions Section */
