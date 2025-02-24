@@ -119,8 +119,9 @@ main {
 
 .metrics-panel {
     max-height: 480px;
-    padding: 15px;
-    font-size: 0.9em;
+    padding: 10px;
+    font-size: 0.85em;
+    gap: 8px;
     overflow-y: auto;
     background: rgba(255, 255, 255, 0.1);
     border-radius: 8px;
@@ -146,8 +147,8 @@ main {
 }
 
 .metric-box {
-    margin-bottom: 12px;
-    border-radius: 8px;
+    margin-bottom: 8px;
+    border-radius: 6px;
     background: linear-gradient(145deg, 
         rgba(255, 255, 255, 0.05) 0%,
         rgba(255, 255, 255, 0.02) 100%);
@@ -157,8 +158,8 @@ main {
 }
 
 .metric-box h3 {
-    padding: 10px 15px;
-    font-size: 1em;
+    padding: 6px 10px;
+    font-size: 0.9em;
     background: linear-gradient(90deg, var(--gradient-1), var(--gradient-2));
     margin: 0;
     color: var(--background);
@@ -167,10 +168,10 @@ main {
 }
 
 .metric-value {
-    padding: 10px;
+    padding: 6px 8px;
+    border-radius: 6px;
     background: rgba(255, 255, 255, 0.03);
     border: 1px solid rgba(255, 255, 255, 0.1);
-    border-radius: 8px;
     transition: all 0.3s ease;
 }
 
@@ -182,8 +183,8 @@ main {
 }
 
 .metric-header {
-    margin-bottom: 6px;
-    font-size: 0.8em;
+    margin-bottom: 4px;
+    font-size: 0.75em;
     color: var(--text-secondary);
     text-transform: uppercase;
     letter-spacing: 1px;
@@ -204,16 +205,14 @@ main {
 }
 
 .metric-group {
+    padding: 8px;
+    margin-bottom: 8px;
     background: rgba(66, 66, 66, 0.3);
-    padding: 12px;
     border-radius: 5px;
-    margin-bottom: 12px;
 }
 
 .metrics-row {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 2rem;
+    gap: 1rem;
 }
 
 .metric-box:hover {
@@ -231,8 +230,10 @@ main {
 }
 
 .metric-grid {
-    padding: 10px;
-    gap: 8px;
+    padding: 6px;
+    gap: 6px;
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
 }
 
 .metric-label {
@@ -548,7 +549,7 @@ main {
 .value {
     position: relative;
     transition: all 0.3s ease;
-    font-size: 1.2em;
+    font-size: 1em;
 }
 
 .value.changed {
@@ -648,17 +649,17 @@ main {
 }
 
 .bilateral-values {
-    gap: 6px;
+    gap: 4px;
 }
 
 .bilateral-values span {
-    padding: 6px 8px;
-    font-size: 1.1em;
+    padding: 4px 6px;
+    font-size: 0.95em;
     flex: 1;
     background: linear-gradient(145deg, 
         rgba(96, 239, 255, 0.1) 0%,
         rgba(0, 97, 255, 0.1) 100%);
-    border-radius: 8px;
+    border-radius: 4px;
     text-align: center;
     font-weight: 600;
     color: var(--gradient-2);
