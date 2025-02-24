@@ -127,6 +127,17 @@ class MovementAnalyzer {
         `;
 
         this.container.innerHTML = html;
+
+        // Add animation class when values change
+        const valueElements = document.querySelectorAll('.value');
+        valueElements.forEach(el => {
+            const newValue = el.textContent;
+            if (el.dataset.lastValue !== newValue) {
+                el.classList.add('changed');
+                setTimeout(() => el.classList.remove('changed'), 500);
+                el.dataset.lastValue = newValue;
+            }
+        });
     }
 
     calculateAngle(a, b, c) {
