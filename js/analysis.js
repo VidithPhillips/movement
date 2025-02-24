@@ -180,69 +180,97 @@ class MovementAnalyzer {
     }
 
     updateDisplay(metrics, confidence) {
+        // Create sections for each body part
+        const sections = {
+            upperBody: {
+                title: 'Upper Body',
+                metrics: {
+                    shoulderAngle: { label: 'Shoulder Angle', unit: '°', bilateral: true },
+                    elbowAngle: { label: 'Elbow Angle', unit: '°', bilateral: true },
+                    neckTilt: { label: 'Neck Tilt', unit: '°' },
+                    shoulderLevel: { label: 'Shoulder Level', unit: '%' }
+                }
+            },
+            core: {
+                title: 'Core',
+                metrics: {
+                    spineAngle: { label: 'Spine Angle', unit: '°' },
+                    trunkLean: { label: 'Trunk Lean', unit: '°' },
+                    pelvisLevel: { label: 'Pelvis Level', unit: '%' },
+                    torsoRotation: { label: 'Torso Rotation', unit: '°' }
+                }
+            },
+            lowerBody: {
+                title: 'Lower Body',
+                metrics: {
+                    kneeAngle: { label: 'Knee Angle', unit: '°', bilateral: true },
+                    hipAngle: { label: 'Hip Angle', unit: '°', bilateral: true },
+                    ankleAngle: { label: 'Ankle Angle', unit: '°', bilateral: true }
+                }
+            },
+            quality: {
+                title: 'Movement Quality',
+                metrics: {
+                    symmetry: {
+                        shoulders: { label: 'Shoulder Symmetry', unit: '%' },
+                        hips: { label: 'Hip Symmetry', unit: '%' },
+                        knees: { label: 'Knee Symmetry', unit: '%' }
+                    },
+                    stability: { label: 'Postural Stability', unit: '%' },
+                    balance: { label: 'Balance Score', unit: '%' }
+                }
+            }
+        };
+
         let html = '';
-
-        // Upper Body Section
-        if (confidence.upper.isValid) {
-            html += `
-                <div class="metric-box">
-                    <h3>Upper Body</h3>
-                    <div class="metric-grid">
-                        ${this.generateMetricsHTML(metrics.upperBody)}
+        
+        // Generate HTML for each section
+        Object.entries(sections).forEach(([section, data]) => {
+            if (metrics[section]) {
+                html += `
+                    <div class="metric-box">
+                        <h3>${data.title}</h3>
+                        <div class="metric-grid">
+                            ${this.generateSectionMetrics(metrics[section], data.metrics)}
+                        </div>
                     </div>
-                </div>
-            `;
-        }
-
-        // Core Section
-        if (confidence.core.isValid) {
-            html += `
-                <div class="metric-box">
-                    <h3>Core</h3>
-                    <div class="metric-grid">
-                        ${this.generateMetricsHTML(metrics.core)}
-                    </div>
-                </div>
-            `;
-        }
-
-        // Lower Body Section
-        if (confidence.lower.isValid) {
-            html += `
-                <div class="metric-box">
-                    <h3>Lower Body</h3>
-                    <div class="metric-grid">
-                        ${this.generateMetricsHTML(metrics.lowerBody)}
-                    </div>
-                </div>
-            `;
-        }
+                `;
+            }
+        });
 
         this.container.innerHTML = html || '<div class="metric-box">Adjusting camera view...</div>';
     }
 
-    generateMetricsHTML(metrics) {
-        if (!metrics) return '';
-        
-        return Object.entries(metrics).map(([name, value]) => {
-            if (typeof value === 'object' && (value.left || value.right)) {
-                // Bilateral metrics
+    generateSectionMetrics(values, metricDefs) {
+        return Object.entries(metricDefs).map(([key, def]) => {
+            const value = values[key];
+            
+            if (def.bilateral) {
                 return `
                     <div class="metric-value">
-                        <div class="metric-header">${this.formatMetricName(name)}</div>
+                        <div class="metric-header">${def.label}</div>
                         <div class="bilateral-values">
-                            <span>L: ${Math.round(value.left)}°</span>
-                            <span>R: ${Math.round(value.right)}°</span>
+                            <span>L: ${Math.round(value.left)}${def.unit}</span>
+                            <span>R: ${Math.round(value.right)}${def.unit}</span>
                         </div>
                     </div>
                 `;
+            } else if (typeof value === 'object' && !def.bilateral) {
+                // Handle nested metrics (like symmetry)
+                return Object.entries(value).map(([subKey, subValue]) => `
+                    <div class="metric-value">
+                        <div class="metric-header">${metricDefs[key][subKey].label}</div>
+                        <div class="value">
+                            ${Math.round(subValue)}${metricDefs[key][subKey].unit}
+                        </div>
+                    </div>
+                `).join('');
             } else {
-                // Single metrics
                 return `
                     <div class="metric-value">
-                        <div class="metric-header">${this.formatMetricName(name)}</div>
+                        <div class="metric-header">${def.label}</div>
                         <div class="value">
-                            ${Math.round(value)}°
+                            ${Math.round(value)}${def.unit}
                         </div>
                     </div>
                 `;

@@ -88,7 +88,7 @@ body {
 .metric-header {
     color: #aaa;
     font-size: 0.9em;
-    margin-bottom: 4px;
+    margin-bottom: 8px;
 }
 
 .normal-range {
@@ -146,7 +146,7 @@ body {
 .metric-grid {
     display: grid;
     grid-template-columns: repeat(2, 1fr);
-    gap: 8px;
+    gap: 10px;
 }
 
 .metric-value:hover {
@@ -557,4 +557,5 @@ body {
 .value {
     font-size: 1.2em;
     text-align: center;
+    color: #fff;
 } 
