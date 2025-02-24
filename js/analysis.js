@@ -1,6 +1,12 @@
 class MovementAnalyzer {
     constructor(containerId) {
+        console.log('Initializing MovementAnalyzer...');
         this.container = document.getElementById(containerId);
+        if (!this.container) {
+            console.error('Metrics container not found:', containerId);
+            return;
+        }
+        
         this.setupMetrics();
         this.setupEventListeners();
     }
@@ -15,6 +21,7 @@ class MovementAnalyzer {
 
     setupEventListeners() {
         window.addEventListener('pose-updated', (event) => {
+            console.log('Received pose update');
             this.updateMetrics(event.detail);
         });
     }

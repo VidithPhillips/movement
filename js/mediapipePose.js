@@ -18,8 +18,9 @@ class MediaPipePose {
       minTrackingConfidence: 0.5
     });
 
-    // Set up callback
+    // Add debug logging
     this.pose.onResults((results) => {
+      console.log('Pose detected:', results.poseLandmarks ? 'yes' : 'no');
       this.drawResults(results);
       if (results.poseLandmarks) {
         // Dispatch event with landmarks
@@ -31,6 +32,7 @@ class MediaPipePose {
   }
 
   async start() {
+    console.log('Starting camera...');
     const camera = new Camera(this.video, {
       onFrame: async () => {
         await this.pose.send({image: this.video});
@@ -39,6 +41,7 @@ class MediaPipePose {
       height: 480
     });
     await camera.start();
+    console.log('Camera started');
   }
 
   drawResults(results) {

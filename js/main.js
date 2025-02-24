@@ -1,6 +1,6 @@
 class MovementAnalysis {
     constructor() {
-        console.log('Initializing MovementAnalysis...');
+        console.log('Starting MovementAnalysis...');
         this.initializeComponents();
         this.setupCamera();
     }
@@ -9,17 +9,18 @@ class MovementAnalysis {
         // Get DOM elements
         this.video = document.getElementById('video');
         this.canvas = document.getElementById('output');
+        
+        if (!this.video || !this.canvas) {
+            console.error('Required elements not found');
+            return;
+        }
+        
         this.canvas.width = 640;
         this.canvas.height = 480;
-        
-        console.log('Initializing components...');
         
         // Initialize components
         this.pose = new MediaPipePose(this.video, this.canvas);
         this.analyzer = new MovementAnalyzer('movement-metrics');
-        this.visualizer = new PoseVisualizer3D(document.querySelector('.video-container'));
-        
-        console.log('Components initialized');
     }
 
     async setupCamera() {
@@ -32,25 +33,24 @@ class MovementAnalysis {
             this.video.srcObject = stream;
             await this.video.play();
             
-            // Start pose detection
             console.log('Starting pose detection...');
             await this.pose.start();
-            console.log('Pose detection started');
         } catch (error) {
             console.error('Failed to initialize:', error);
             const metrics = document.getElementById('movement-metrics');
-            metrics.innerHTML = `
-                <div class="error-message">
-                    Failed to start camera. Please check permissions and refresh.
-                </div>
-            `;
+            if (metrics) {
+                metrics.innerHTML = `
+                    <div class="error-message">
+                        Failed to start camera. Please check permissions and refresh.
+                    </div>
+                `;
+            }
         }
     }
 }
 
 // Start when page loads
 document.addEventListener('DOMContentLoaded', () => {
-    console.log('DOM loaded, starting application...');
     new MovementAnalysis();
 });
 
