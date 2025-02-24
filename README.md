@@ -1,163 +1,87 @@
-# 🧠 Movement Analysis AI
+# Movement Analysis System
 
-> Advanced real-time movement disorder analysis using AI-powered motion tracking and 3D visualization.
+> Real-time movement analysis using AI-powered motion tracking with clinical metrics and 3D visualization.
 
-![Movement Analysis Demo](demo.gif)
+## Overview
+This system provides real-time analysis of human movement using computer vision, offering precise measurements across different anatomical planes with clinical context.
 
-## 💡 Overview
+## Key Features
 
-This system provides real-time analysis of movement patterns to help identify and understand movement disorders. Using advanced computer vision and machine learning, it tracks and analyzes body movements with medical-grade precision, offering immediate visual feedback and detailed metrics.
+### 1. Movement Tracking
+- **Sagittal Plane (Side View)**
+  - Trunk flexion/extension (0-15° normal range)
+  - Neck flexion (0-15° normal range)
+  - Hip and knee movement patterns
 
-## 🔬 Key Capabilities
+- **Frontal Plane (Front View)**
+  - Lateral trunk lean (0-5° normal range)
+  - Shoulder symmetry
+  - Pelvic alignment
 
-### Movement Analysis
-- **Real-time Motion Tracking** with sub-millimeter precision
-- **3D Visualization** of body mechanics
-- **Joint Angle Analysis** across multiple planes
-- **Posture Assessment** and deviation tracking
+- **Functional Measurements**
+  - Bilateral knee flexion (0-140° range)
+  - Bilateral hip flexion (0-125° range)
+  - Movement symmetry analysis
 
-### Clinical Metrics
-- **Movement Symmetry Analysis**
-- **Range of Motion Measurements**
-- **Stability Assessment**
-- **Gait Pattern Analysis**
-- **Tremor Detection & Quantification**
+### 2. Real-time Analysis
+- Instant angle calculations
+- Live symmetry assessment
+- Dynamic range of motion tracking
+- Movement quality metrics
 
-### Visualization Tools
-- **Real-time 3D Rendering**
-- **Joint Angle Visualization**
-- **Movement Path Tracking**
-- **Posture Overlay Analysis**
+### 3. 3D Visualization
+- Real-time skeletal tracking
+- Multi-plane movement representation
+- Interactive viewing angles
 
-### Performance Features
-- **30 FPS Analysis**
-- **Low-latency Processing**
-- **Browser-based Operation**
-- **No Special Hardware Required**
+## Technical Details
 
-## 📊 Analysis Metrics
+### Motion Capture
+- MediaPipe Pose detection
+- 33 body landmarks tracked
+- 30 FPS real-time processing
+- Sub-millimeter precision
 
-The system tracks and analyzes:
+### Analysis Metrics
+- Clinical reference ranges
+- Bilateral comparison
+- Postural alignment
+- Movement symmetry
 
-- **Joint Angles & ROM**
-  - Dynamic angle measurements
-  - Range of motion tracking
-  - Movement limitations
+## Getting Started
 
-- **Movement Patterns**
-  - Symmetry analysis
-  - Coordination assessment
-  - Movement smoothness
+1. **Setup**
+   ```bash
+   git clone [repository-url]
+   cd movement-analysis
+   ```
 
-- **Posture Analysis**
-  - Spine alignment
-  - Body positioning
-  - Balance assessment
+2. **Usage**
+   - Open index.html in a modern browser
+   - Allow camera access
+   - Stand 6-8 feet from camera
+   - Ensure full body is visible
 
-- **Temporal Characteristics**
-  - Movement speed
-  - Rhythm analysis
-  - Pattern timing
+3. **Viewing Metrics**
+   - Joint angles shown with normal ranges
+   - Color-coded quality indicators
+   - Real-time movement feedback
+   - Symmetry analysis
 
-## 🔧 Technical Architecture
+## Privacy & Technical Notes
+- All processing done locally in-browser
+- No data storage or transmission
+- Uses WebGL for 3D visualization
+- Requires modern browser with WebGL support
 
-### Core Components
-- **MediaPipe Integration** for precise pose estimation
-- **Three.js** for 3D visualization
-- **Custom Analytics Engine** for movement analysis
-- **Real-time Feedback System**
+## Future Development
+- [ ] Movement pattern recognition
+- [ ] Temporal analysis features
+- [ ] Advanced clinical metrics
+- [ ] Movement quality scoring
 
-### Performance Optimizations
-- WebGL acceleration
-- Efficient data processing
-- Optimized render pipeline
-- Memory management system
-
-## 💻 Setup & Usage
-
-### Requirements
-- Modern web browser (Chrome/Firefox/Safari)
-- Webcam access
-- Stable internet connection
-
-### Quick Start
-1. Clone the repository
-2. Open index.html in a browser
-3. Allow camera access
-4. Stand 6-8 feet from camera
-5. Begin movement assessment
-
-## 📈 Applications
-
-### Clinical Assessment
-- Movement disorder evaluation
-- Progress monitoring
-- Treatment planning
-- Rehabilitation tracking
-
-### Research
-- Movement pattern analysis
-- Clinical studies
-- Data collection
-- Pattern recognition
-
-### Education
-- Medical training
-- Patient education
-- Movement disorder understanding
-- Clinical demonstration
-
-## 🔒 Privacy & Security
-
-- All processing done locally
-- No data stored or transmitted
-- HIPAA-compliant design
-- Secure implementation
-
-## 🛠️ Development
-
-### Stack
-- JavaScript (ES6+)
-- WebGL
-- MediaPipe ML Models
-- Three.js Graphics
-
-### Architecture
-- Modular component design
-- Event-driven system
-- Optimized rendering pipeline
-- Real-time analysis engine
-
-## 🔜 Future Development
-
-- [ ] Advanced pattern recognition
-- [ ] Machine learning integration
-- [ ] Additional disorder profiles
-- [ ] Enhanced visualization tools
-- [ ] Research data export
-- [ ] Clinical reporting tools
-
-## 📚 Documentation
-
-Detailed documentation available for:
-- [Technical Implementation](docs/technical.md)
-- [Analysis Methods](docs/analysis.md)
-- [Clinical Usage](docs/clinical.md)
-- [API Reference](docs/api.md)
-
-## 🤝 Contributing
-
-We welcome contributions from:
-- Medical professionals
-- Software developers
-- Movement specialists
-- Research institutions
-
-See [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines.
-
-## 📄 License
-
-MIT License - See [LICENSE.md](LICENSE.md) for details.
+## License
+MIT License - See LICENSE file for details
 
 ---
 

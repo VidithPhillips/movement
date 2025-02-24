@@ -57,41 +57,55 @@ class MovementAnalyzer {
 
         // Calculate joint angles
         this.metrics.jointAngles = {
-            // Arms
-            leftElbow: this.calculateAngle(
-                landmarks[11], landmarks[13], landmarks[15]  // shoulder -> elbow -> wrist
-            ),
-            rightElbow: this.calculateAngle(
-                landmarks[12], landmarks[14], landmarks[16]
-            ),
-            leftShoulder: this.calculateAngle(
-                landmarks[13], landmarks[11], landmarks[23]  // elbow -> shoulder -> hip
-            ),
-            rightShoulder: this.calculateAngle(
-                landmarks[14], landmarks[12], landmarks[24]
-            ),
+            // Sagittal Plane (side view) angles
+            trunkFlexion: {
+                value: this.calculateAngle(landmarks[11], landmarks[23], landmarks[25]), // shoulder-hip-knee
+                description: "Forward/backward lean",
+                normal: "0-15°"
+            },
+            neckFlexion: {
+                value: this.calculateAngle(landmarks[7], landmarks[0], landmarks[11]), // ear-nose-shoulder
+                description: "Head forward position",
+                normal: "0-15°"
+            },
             
-            // Legs
-            leftKnee: this.calculateAngle(
-                landmarks[23], landmarks[25], landmarks[27]  // hip -> knee -> ankle
-            ),
-            rightKnee: this.calculateAngle(
-                landmarks[24], landmarks[26], landmarks[28]
-            ),
-            leftHip: this.calculateAngle(
-                landmarks[11], landmarks[23], landmarks[25]  // shoulder -> hip -> knee
-            ),
-            rightHip: this.calculateAngle(
-                landmarks[12], landmarks[24], landmarks[26]
-            ),
-            
-            // Spine and Neck
-            spine: this.calculateAngle(
-                landmarks[0], landmarks[11], landmarks[23]   // nose -> shoulder -> hip
-            ),
-            neck: this.calculateAngle(
-                landmarks[7], landmarks[0], landmarks[11]    // ear -> nose -> shoulder
-            )
+            // Frontal Plane (front view) angles
+            lateralLean: {
+                value: this.calculateVerticalDeviation([landmarks[11], landmarks[23]]), // shoulder-hip vertical
+                description: "Side lean",
+                normal: "0-5°"
+            },
+            shoulderTilt: {
+                value: this.calculateHorizontalDeviation(landmarks[11], landmarks[12]),
+                description: "Shoulder levelness",
+                normal: "0-5°"
+            },
+
+            // Functional angles
+            kneeFlexion: {
+                left: {
+                    value: this.calculateAngle(landmarks[23], landmarks[25], landmarks[27]),
+                    description: "Left knee bend",
+                    normal: "0-140°"
+                },
+                right: {
+                    value: this.calculateAngle(landmarks[24], landmarks[26], landmarks[28]),
+                    description: "Right knee bend",
+                    normal: "0-140°"
+                }
+            },
+            hipFlexion: {
+                left: {
+                    value: this.calculateAngle(landmarks[11], landmarks[23], landmarks[25]),
+                    description: "Left hip bend",
+                    normal: "0-125°"
+                },
+                right: {
+                    value: this.calculateAngle(landmarks[12], landmarks[24], landmarks[26]),
+                    description: "Right hip bend",
+                    normal: "0-125°"
+                }
+            }
         };
 
         // Calculate posture metrics
@@ -213,12 +227,38 @@ class MovementAnalyzer {
         // Update angles display
         const anglesDiv = this.container.querySelector('#angles');
         anglesDiv.innerHTML = Object.entries(this.metrics.jointAngles)
-            .map(([joint, angle]) => `
-                <div class="metric-value">
-                    <span class="label">${this.formatJointName(joint)}:</span>
-                    <span class="value">${angle ? Math.round(angle) : '--'}°</span>
-                </div>
-            `).join('');
+            .map(([joint, data]) => {
+                if (data.left && data.right) {
+                    // Handle bilateral measurements
+                    return `
+                        <div class="metric-group">
+                            <div class="metric-header">${this.formatJointName(joint)}</div>
+                            <div class="metric-value">
+                                <span class="label">Left: ${data.left.value}° (${data.left.normal})</span>
+                                <span class="description">${data.left.description}</span>
+                            </div>
+                            <div class="metric-value">
+                                <span class="label">Right: ${data.right.value}° (${data.right.normal})</span>
+                                <span class="description">${data.right.description}</span>
+                            </div>
+                        </div>
+                    `;
+                } else {
+                    // Handle single measurements
+                    return `
+                        <div class="metric-value">
+                            <div class="metric-header">
+                                <span class="label">${this.formatJointName(joint)}</span>
+                                <span class="normal-range">${data.normal}</span>
+                            </div>
+                            <div class="value ${this.getValueClass(data.value)}">
+                                ${Math.round(data.value)}°
+                            </div>
+                            <div class="description">${data.description}</div>
+                        </div>
+                    `;
+                }
+            }).join('');
 
         // Update posture metrics
         const postureDiv = this.container.querySelector('#posture');
