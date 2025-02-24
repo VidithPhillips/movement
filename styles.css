@@ -8,10 +8,11 @@ body {
 
 .container {
     display: grid;
-    grid-template-columns: 640px 1fr;
+    grid-template-columns: 640px minmax(300px, 1fr);
     gap: 20px;
-    max-width: 1200px;
+    max-width: 1600px;
     margin: 0 auto;
+    align-items: start;
 }
 
 .video-container {
@@ -45,9 +46,26 @@ body {
 }
 
 .metrics-panel {
+    max-height: 480px;
+    overflow-y: auto;
     background: rgba(255, 255, 255, 0.1);
     padding: 20px;
     border-radius: 8px;
+    scrollbar-width: thin;
+    scrollbar-color: rgba(255, 255, 255, 0.3) transparent;
+}
+
+.metrics-panel::-webkit-scrollbar {
+    width: 6px;
+}
+
+.metrics-panel::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.metrics-panel::-webkit-scrollbar-thumb {
+    background-color: rgba(255, 255, 255, 0.3);
+    border-radius: 3px;
 }
 
 .metric-box {
@@ -411,4 +429,113 @@ body {
     background: rgba(255, 255, 255, 0.05);
     padding: 8px;
     border-radius: 4px 4px 0 0;
+}
+
+.validation-warning {
+    background: rgba(255, 152, 0, 0.2);
+    border-radius: 4px;
+    padding: 12px;
+    margin-bottom: 8px;
+}
+
+.warning-message {
+    color: #ffa726;
+    font-size: 0.9em;
+    margin: 4px 0;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.warning-message::before {
+    content: "⚠️";
+}
+
+.value {
+    font-weight: bold;
+    transition: color 0.3s ease;
+}
+
+.value.excellent { color: #4caf50; }
+.value.good { color: #8bc34a; }
+.value.fair { color: #ffc107; }
+.value.poor { color: #f44336; }
+.value.normal { color: #4caf50; }
+.value.below { color: #ffc107; }
+.value.above { color: #f44336; }
+
+.distance-gauge {
+    position: absolute;
+    top: 20px;
+    left: 20px;
+    background: rgba(0, 0, 0, 0.7);
+    padding: 12px;
+    border-radius: 8px;
+    width: 200px;
+    z-index: 10;
+}
+
+.gauge-label {
+    color: #fff;
+    font-size: 14px;
+    margin-bottom: 8px;
+}
+
+.gauge-bar {
+    position: relative;
+    height: 8px;
+    background: rgba(255, 255, 255, 0.2);
+    border-radius: 4px;
+    overflow: hidden;
+}
+
+.gauge-fill {
+    position: absolute;
+    height: 100%;
+    width: 50%;
+    background: #4caf50;
+    transition: all 0.3s ease;
+    border-radius: 4px;
+}
+
+.gauge-fill.too-close { 
+    background: #f44336;
+    width: 30%;
+}
+
+.gauge-fill.too-far { 
+    background: #f44336;
+    width: 80%;
+}
+
+.gauge-fill.optimal { 
+    background: #4caf50;
+    width: 50%;
+}
+
+.gauge-markers {
+    position: absolute;
+    top: 12px;
+    left: 0;
+    right: 0;
+    display: flex;
+    justify-content: space-between;
+    font-size: 12px;
+    color: rgba(255, 255, 255, 0.7);
+}
+
+.marker {
+    position: relative;
+    padding-top: 8px;
+}
+
+.marker::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 50%;
+    transform: translateX(-50%);
+    height: 6px;
+    width: 2px;
+    background: rgba(255, 255, 255, 0.4);
 } 

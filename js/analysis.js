@@ -14,6 +14,30 @@ class MovementAnalyzer {
         };
         
         this.historyLength = 30; // 1 second at 30fps
+
+        // Add threshold configurations
+        this.thresholds = {
+            distance: {
+                min: 0.3, // Normalized shoulder width when too close
+                max: 0.5, // Normalized shoulder width when too far
+                optimal: 0.4 // Ideal normalized shoulder width
+            },
+            orientation: {
+                maxTilt: 30, // Maximum degrees of body tilt allowed
+                maxRotation: 45 // Maximum degrees of rotation allowed
+            },
+            confidence: {
+                min: 0.7 // Minimum confidence score for reliable measurements
+            }
+        }
+
+        this.distanceGauge = {
+            fill: document.querySelector('.gauge-fill'),
+            optimal: {
+                min: 0.35,
+                max: 0.45
+            }
+        };
     }
 
     setupMetrics() {
@@ -56,6 +80,16 @@ class MovementAnalyzer {
 
     updateMetrics(landmarks) {
         if (!landmarks) return;
+
+        // Update distance gauge
+        this.updateDistanceGauge(landmarks);
+
+        const validationResult = this.isValidMeasurement(landmarks);
+        
+        if (!validationResult.isValid) {
+            this.showValidationWarnings(validationResult.messages);
+            return;
+        }
 
         // Sagittal Plane Measurements
         this.metrics.sagittalPlane = {
@@ -169,30 +203,160 @@ class MovementAnalyzer {
     }
 
     updateMovementQuality(landmarks) {
-        // Calculate symmetry
-        this.metrics.quality.symmetry = {
-            arms: this.calculateSymmetry(
-                this.metrics.sagittalPlane.leftShoulder,
-                this.metrics.sagittalPlane.rightShoulder,
-                this.metrics.sagittalPlane.leftElbow,
-                this.metrics.sagittalPlane.rightElbow
-            ),
-            legs: this.calculateSymmetry(
-                this.metrics.sagittalPlane.leftHip,
-                this.metrics.sagittalPlane.rightHip,
-                this.metrics.sagittalPlane.leftKnee,
-                this.metrics.sagittalPlane.rightKnee
-            )
+        this.metrics.quality = {
+            postural: {
+                alignment: {
+                    value: this.calculatePosturalAlignment(landmarks),
+                    description: "Overall postural alignment",
+                    normal: "80-100%",
+                    clinical: "Indicates overall postural control"
+                },
+                stability: {
+                    value: this.calculateStability(landmarks),
+                    description: "Postural stability",
+                    normal: "85-100%",
+                    clinical: "Balance and stability assessment"
+                }
+            },
+            symmetry: {
+                upper: {
+                    value: this.calculateUpperBodySymmetry(landmarks),
+                    description: "Upper body symmetry",
+                    normal: "90-100%",
+                    clinical: "Left-right upper body comparison"
+                },
+                lower: {
+                    value: this.calculateLowerBodySymmetry(landmarks),
+                    description: "Lower body symmetry",
+                    normal: "90-100%",
+                    clinical: "Left-right lower body comparison"
+                }
+            },
+            movement: {
+                smoothness: {
+                    value: this.calculateMovementSmoothness(),
+                    description: "Movement smoothness",
+                    normal: "85-100%",
+                    clinical: "Quality of movement transitions"
+                },
+                coordination: {
+                    value: this.calculateCoordination(landmarks),
+                    description: "Movement coordination",
+                    normal: "80-100%",
+                    clinical: "Multi-joint coordination"
+                }
+            }
         };
-        
-        // Update range of motion tracking
-        this.updateRangeOfMotion(landmarks);
     }
 
-    calculateSymmetry(leftUpper, rightUpper, leftLower, rightLower) {
-        const upperDiff = Math.abs(leftUpper - rightUpper);
-        const lowerDiff = Math.abs(leftLower - rightLower);
-        return Math.max(0, 100 - ((upperDiff + lowerDiff) / 2));
+    calculatePosturalAlignment(landmarks) {
+        // Calculate vertical alignment of key points
+        const verticalPoints = [landmarks[0], landmarks[11], landmarks[23], landmarks[25]];
+        let alignment = this.calculateVerticalDeviation(verticalPoints);
+        
+        // Adjust for distance from camera
+        const distance = this.estimateDistanceFromCamera(landmarks);
+        return this.adjustMetricForDistance(alignment, distance);
+    }
+
+    calculateStability(landmarks) {
+        // Track movement of center points over time
+        const centerPoints = [
+            landmarks[23], // left hip
+            landmarks[24]  // right hip
+        ];
+        
+        // Calculate stability based on movement variation
+        return this.calculateMovementStability(centerPoints);
+    }
+
+    estimateDistanceFromCamera(landmarks) {
+        // Use shoulder width as reference
+        const leftShoulder = landmarks[11];
+        const rightShoulder = landmarks[12];
+        const shoulderWidth = Math.abs(rightShoulder.x - leftShoulder.x);
+        
+        // Add confidence check
+        const confidence = (leftShoulder.visibility + rightShoulder.visibility) / 2;
+        if (confidence < 0.7) return null;
+
+        return this.normalizeDistance(shoulderWidth);
+    }
+
+    adjustMetricForDistance(value, distance) {
+        // Adjust metrics based on subject's distance from camera
+        const optimalDistance = 0.4; // normalized optimal distance
+        const tolerance = 0.1;
+        
+        if (Math.abs(distance - optimalDistance) > tolerance) {
+            return null; // or return adjusted value
+        }
+        return value;
+    }
+
+    calculateMovementStability(points, timeWindow = 30) {
+        // Calculate stability over time window
+        if (!this.positionHistory) {
+            this.positionHistory = [];
+        }
+        
+        this.positionHistory.push(points);
+        if (this.positionHistory.length > timeWindow) {
+            this.positionHistory.shift();
+        }
+        
+        // Calculate variation in position
+        return this.calculateStabilityScore(this.positionHistory);
+    }
+
+    normalizeDistance(shoulderWidth) {
+        // Normalize shoulder width to 0-1 range
+        // Typical shoulder width in pixels at 6-8 feet
+        const minWidth = 100;
+        const maxWidth = 200;
+        return (shoulderWidth - minWidth) / (maxWidth - minWidth);
+    }
+
+    calculateStabilityScore(history) {
+        if (history.length < 2) return 100;
+        
+        // Calculate movement variance
+        let totalVariance = 0;
+        for (let i = 1; i < history.length; i++) {
+            const prev = history[i-1];
+            const curr = history[i];
+            totalVariance += this.calculatePointsVariance(prev, curr);
+        }
+        
+        // Convert to stability score (100% = perfectly stable)
+        return Math.max(0, 100 - (totalVariance * 100));
+    }
+
+    calculatePointsVariance(points1, points2) {
+        // Calculate movement variance between two sets of points
+        let totalVariance = 0;
+        for (let i = 0; i < points1.length; i++) {
+            const dx = points1[i].x - points2[i].x;
+            const dy = points1[i].y - points2[i].y;
+            totalVariance += dx*dx + dy*dy;
+        }
+        return Math.sqrt(totalVariance / points1.length);
+    }
+
+    calculateUpperBodySymmetry(landmarks) {
+        // Implementation of calculateUpperBodySymmetry method
+    }
+
+    calculateLowerBodySymmetry(landmarks) {
+        // Implementation of calculateLowerBodySymmetry method
+    }
+
+    calculateMovementSmoothness() {
+        // Implementation of calculateMovementSmoothness method
+    }
+
+    calculateCoordination(landmarks) {
+        // Implementation of calculateCoordination method
     }
 
     updateRangeOfMotion(landmarks) {
@@ -261,6 +425,22 @@ class MovementAnalyzer {
 
     generateSingleMetricHTML(name, data, plane) {
         const direction = data.direction ? data.direction(data.value) : '';
+        const distanceValid = this.isDistanceValid();
+        
+        if (!distanceValid) {
+            return `
+                <div class="metric-value warning">
+                    <div class="metric-header">
+                        <span class="plane-indicator">${this.formatPlaneName(plane)}</span>
+                        <span class="label">${this.formatMetricName(name)}</span>
+                    </div>
+                    <div class="distance-warning">
+                        Please adjust distance from camera (6-8 feet optimal)
+                    </div>
+                </div>
+            `;
+        }
+
         return `
             <div class="metric-value">
                 <div class="metric-header">
@@ -268,7 +448,7 @@ class MovementAnalyzer {
                     <span class="label">${this.formatMetricName(name)}</span>
                 </div>
                 <div class="value-container">
-                    <span class="value ${this.getValueClass(data.value, data.normal)}">
+                    <span class="value ${this.getValueClass(data.value, data.normal, name)}">
                         ${Math.round(data.value)}°
                     </span>
                     <span class="direction">${direction}</span>
@@ -290,13 +470,13 @@ class MovementAnalyzer {
                 <div class="bilateral-container">
                     <div class="side-value">
                         <span class="side-label">Left</span>
-                        <span class="value ${this.getValueClass(data.left.value, data.left.normal)}">
+                        <span class="value ${this.getValueClass(data.left.value, data.left.normal, name)}">
                             ${Math.round(data.left.value)}°
                         </span>
                     </div>
                     <div class="side-value">
                         <span class="side-label">Right</span>
-                        <span class="value ${this.getValueClass(data.right.value, data.right.normal)}">
+                        <span class="value ${this.getValueClass(data.right.value, data.right.normal, name)}">
                             ${Math.round(data.right.value)}°
                         </span>
                     </div>
@@ -315,16 +495,150 @@ class MovementAnalyzer {
         return planes[plane] || plane;
     }
 
-    getValueClass(value, normalRange) {
-        if (!normalRange) return '';
-        const [min, max] = normalRange.split('-').map(n => parseInt(n));
-        if (value >= min && value <= max) return 'normal';
-        return value < min ? 'below' : 'above';
+    getValueClass(value, normalRange, metric) {
+        if (!value || !normalRange) return '';
+        
+        // Parse range values
+        const [min, max] = normalRange.replace('°', '').replace('%', '')
+            .split('-').map(n => parseFloat(n));
+
+        // Different thresholds for different metric types
+        switch(metric) {
+            case 'symmetry':
+                if (value >= 95) return 'excellent';
+                if (value >= 85) return 'good';
+                if (value >= 75) return 'fair';
+                return 'poor';
+
+            case 'stability':
+                if (value >= 90) return 'excellent';
+                if (value >= 80) return 'good';
+                if (value >= 70) return 'fair';
+                return 'poor';
+
+            case 'angle':
+                // For joint angles, being within range is good
+                if (value >= min && value <= max) return 'normal';
+                // Small deviations are fair
+                if (value < min && value >= min - 10 || 
+                    value > max && value <= max + 10) return 'fair';
+                return 'poor';
+
+            default:
+                if (value >= 90) return 'excellent';
+                if (value >= 75) return 'good';
+                if (value >= 60) return 'fair';
+                return 'poor';
+        }
     }
 
     formatMetricName(name) {
         return name
             .replace(/([A-Z])/g, ' $1')
             .replace(/^./, str => str.toUpperCase());
+    }
+
+    isValidMeasurement(landmarks) {
+        const distance = this.estimateDistanceFromCamera(landmarks);
+        const orientation = this.calculateBodyOrientation(landmarks);
+        const confidence = this.calculateLandmarkConfidence(landmarks);
+
+        return {
+            isValid: distance.isValid && orientation.isValid && confidence.isValid,
+            messages: [
+                ...(!distance.isValid ? [
+                    `Please adjust distance: ${
+                        distance.tooClose 
+                            ? 'Step back (2-3 feet)' 
+                            : 'Step closer (2-3 feet)'
+                    }`
+                ] : []),
+                ...(!orientation.isValid ? [
+                    `Body alignment: ${
+                        Math.abs(orientation.tilt) > this.thresholds.orientation.maxTilt
+                            ? 'Face the camera directly'
+                            : 'Reduce body rotation'
+                    }`
+                ] : []),
+                ...(!confidence.isValid ? [
+                    'Ensure your full body is visible in frame'
+                ] : [])
+            ]
+        };
+    }
+
+    calculateBodyOrientation(landmarks) {
+        // Calculate body orientation using shoulders and hips
+        const shoulderVector = {
+            x: landmarks[12].x - landmarks[11].x,
+            y: landmarks[12].y - landmarks[11].y
+        };
+        const hipVector = {
+            x: landmarks[24].x - landmarks[23].x,
+            y: landmarks[24].y - landmarks[23].y
+        };
+
+        const shoulderAngle = Math.atan2(shoulderVector.y, shoulderVector.x) * 180 / Math.PI;
+        const hipAngle = Math.atan2(hipVector.y, hipVector.x) * 180 / Math.PI;
+
+        return {
+            isValid: Math.abs(shoulderAngle) < this.thresholds.orientation.maxTilt && 
+                    Math.abs(hipAngle) < this.thresholds.orientation.maxTilt,
+            tilt: shoulderAngle,
+            rotation: Math.abs(shoulderAngle - hipAngle)
+        };
+    }
+
+    calculateLandmarkConfidence(landmarks) {
+        // Check visibility and confidence of key landmarks
+        const keyPoints = [
+            landmarks[0],  // nose
+            landmarks[11], landmarks[12], // shoulders
+            landmarks[23], landmarks[24], // hips
+            landmarks[25], landmarks[26], // knees
+            landmarks[27], landmarks[28]  // ankles
+        ];
+
+        const avgConfidence = keyPoints.reduce((sum, point) => 
+            sum + (point.visibility || 0), 0) / keyPoints.length;
+
+        return {
+            isValid: avgConfidence > this.thresholds.confidence.min,
+            value: avgConfidence
+        };
+    }
+
+    showValidationWarnings(messages) {
+        const warningHTML = `
+            <div class="validation-warning">
+                ${messages.map(msg => `<div class="warning-message">${msg}</div>`).join('')}
+            </div>
+        `;
+
+        // Update each metric section with warnings
+        ['sagittal', 'frontal', 'functional', 'quality'].forEach(section => {
+            const div = this.container.querySelector(`#${section}`);
+            if (div) div.innerHTML = warningHTML;
+        });
+    }
+
+    updateDistanceGauge(landmarks) {
+        const distance = this.estimateDistanceFromCamera(landmarks);
+        const fill = this.distanceGauge.fill;
+        
+        // Remove existing classes
+        fill.classList.remove('too-close', 'optimal', 'too-far');
+        
+        // Update gauge based on distance
+        if (distance < this.distanceGauge.optimal.min) {
+            fill.classList.add('too-close');
+            fill.style.width = `${(distance / this.distanceGauge.optimal.min) * 30}%`;
+        } else if (distance > this.distanceGauge.optimal.max) {
+            fill.classList.add('too-far');
+            fill.style.width = `${(distance / this.distanceGauge.optimal.max) * 80}%`;
+        } else {
+            fill.classList.add('optimal');
+            fill.style.width = '50%';
+        }
     }
 } 
