@@ -164,7 +164,7 @@ class MovementAnalyzer {
     }
 
     calculateAngle(a, b, c) {
-        if (!a || !b || !c) return null;
+        if (!a || !b || !c) return 0;
         
         const radians = Math.atan2(
             c.y - b.y,
@@ -176,11 +176,10 @@ class MovementAnalyzer {
         
         let angle = Math.abs(radians * 180.0 / Math.PI);
         if (angle > 180.0) angle = 360 - angle;
-        return Math.round(angle);
+        return angle;
     }
 
     calculateVerticalDeviation(points) {
-        // Calculate deviation from perfect vertical alignment (0-100%)
         let totalDeviation = 0;
         for (let i = 1; i < points.length; i++) {
             const dx = points[i].x - points[i-1].x;

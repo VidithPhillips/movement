@@ -30,7 +30,6 @@ class MovementAnalysis {
             await this.pose.start();
         } catch (error) {
             console.error('Failed to initialize:', error);
-            // Show error in UI
             const metrics = document.getElementById('movement-metrics');
             metrics.innerHTML = `
                 <div class="error-message">
