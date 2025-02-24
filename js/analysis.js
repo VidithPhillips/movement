@@ -279,16 +279,28 @@ class MovementAnalyzer {
     }
 
     estimateDistanceFromCamera(landmarks) {
-        // Use shoulder width as reference
-        const leftShoulder = landmarks[11];
-        const rightShoulder = landmarks[12];
-        const shoulderWidth = Math.abs(rightShoulder.x - leftShoulder.x);
+        // Use height of the person in frame as reference
+        const topPoint = landmarks[0];  // nose
+        const bottomPoint = landmarks[28]; // right ankle
         
-        // Add confidence check
-        const confidence = (leftShoulder.visibility + rightShoulder.visibility) / 2;
-        if (confidence < 0.7) return null;
-
-        return this.normalizeDistance(shoulderWidth);
+        if (!topPoint || !bottomPoint) return null;
+        
+        const personHeight = Math.abs(bottomPoint.y - topPoint.y);
+        const frameHeight = 1.0; // MediaPipe normalizes to 0-1
+        
+        // Calculate percentage of frame occupied
+        const frameOccupancy = personHeight / frameHeight;
+        
+        // Rough distance estimate (in feet) based on frame occupancy
+        // When person takes up ~70% of frame height, they're typically at optimal distance
+        const estimatedDistance = 7 * (0.7 / frameOccupancy);
+        
+        return {
+            value: estimatedDistance,
+            isValid: frameOccupancy > 0.4 && frameOccupancy < 0.95, // Allow wider range
+            tooClose: frameOccupancy > 0.95,
+            tooFar: frameOccupancy < 0.4
+        };
     }
 
     adjustMetricForDistance(value, distance) {
@@ -296,7 +308,7 @@ class MovementAnalyzer {
         const optimalDistance = 0.4; // normalized optimal distance
         const tolerance = 0.1;
         
-        if (Math.abs(distance - optimalDistance) > tolerance) {
+        if (Math.abs(distance.value - optimalDistance) > tolerance) {
             return null; // or return adjusted value
         }
         return value;
@@ -548,28 +560,21 @@ class MovementAnalyzer {
 
     isValidMeasurement(landmarks) {
         const distance = this.estimateDistanceFromCamera(landmarks);
-        const orientation = this.calculateBodyOrientation(landmarks);
         const confidence = this.calculateLandmarkConfidence(landmarks);
 
+        // More lenient validation
         return {
-            isValid: distance.isValid && orientation.isValid && confidence.isValid,
+            isValid: confidence.isValid && distance?.isValid,
             messages: [
-                ...(!distance.isValid ? [
-                    `Please adjust distance: ${
-                        distance.tooClose 
-                            ? 'Step back (2-3 feet)' 
-                            : 'Step closer (2-3 feet)'
-                    }`
-                ] : []),
-                ...(!orientation.isValid ? [
-                    `Body alignment: ${
-                        Math.abs(orientation.tilt) > this.thresholds.orientation.maxTilt
-                            ? 'Face the camera directly'
-                            : 'Reduce body rotation'
-                    }`
+                ...(!distance?.isValid ? [
+                    `Adjust position: ${
+                        distance?.tooClose 
+                            ? 'Step back' 
+                            : 'Step closer'
+                    } (${distance?.value.toFixed(1)}ft)`
                 ] : []),
                 ...(!confidence.isValid ? [
-                    'Ensure your full body is visible in frame'
+                    'Ensure full body is visible'
                 ] : [])
             ]
         };
@@ -634,23 +639,27 @@ class MovementAnalyzer {
         if (!this.distanceGauge?.fill) return;
         
         const distance = this.estimateDistanceFromCamera(landmarks);
-        if (distance === null) return;
+        if (!distance) return;
         
         const fill = this.distanceGauge.fill;
+        const label = document.querySelector('.gauge-label');
         
         // Remove existing classes
         fill.classList.remove('too-close', 'optimal', 'too-far');
         
-        // Update gauge based on distance
-        if (distance < this.distanceGauge.optimal.min) {
+        // Update gauge and label
+        if (distance.tooClose) {
             fill.classList.add('too-close');
-            fill.style.width = `${(distance / this.distanceGauge.optimal.min) * 30}%`;
-        } else if (distance > this.distanceGauge.optimal.max) {
+            fill.style.width = '90%';
+            label.textContent = `Too Close (${distance.value.toFixed(1)}ft)`;
+        } else if (distance.tooFar) {
             fill.classList.add('too-far');
-            fill.style.width = `${(distance / this.distanceGauge.optimal.max) * 80}%`;
+            fill.style.width = '30%';
+            label.textContent = `Too Far (${distance.value.toFixed(1)}ft)`;
         } else {
             fill.classList.add('optimal');
-            fill.style.width = '50%';
+            fill.style.width = '60%';
+            label.textContent = `Distance: ${distance.value.toFixed(1)}ft`;
         }
     }
 } 
