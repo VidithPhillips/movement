@@ -86,9 +86,8 @@ body {
 }
 
 .metric-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
+    color: #aaa;
+    font-size: 0.9em;
     margin-bottom: 4px;
 }
 
@@ -540,4 +539,22 @@ body {
     height: 6px;
     width: 2px;
     background: rgba(255, 255, 255, 0.4);
+}
+
+.bilateral-values {
+    display: flex;
+    justify-content: space-around;
+    margin-top: 8px;
+    font-size: 1.1em;
+}
+
+.bilateral-values span {
+    background: rgba(255, 255, 255, 0.1);
+    padding: 4px 8px;
+    border-radius: 4px;
+}
+
+.value {
+    font-size: 1.2em;
+    text-align: center;
 } 
